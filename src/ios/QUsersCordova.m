@@ -8,14 +8,13 @@ static const NSString* QTimeAddedField = @"timeAdded";
 @implementation QUsersCordova
 
 -(void) resolvePermissionAccess:(NSString*) callbackId andCallback:(void (^)(QABAdressBook*)) callback {
-    QABAdressBook *addressBook = nil;
-    @try {
-        addressBook = [QABAdressBook sharedInstance];
-        callback(addressBook);
-    } @catch(NSException *e) {
-        // sent permission error;
-        [self sentErrorCallback:callbackId andError:@"PERMISSION_DENIED_ERROR"];
-    }
+    [QABAdressBook requestPermission:^(BOOL granted) {
+        if(granted) {
+            callback([QABAdressBook sharedInstance]);
+        } else {
+            [self sentErrorCallback:callbackId andError:@"PERMISSION_DENIED_ERROR"];
+        }
+    }];
 }
 
 -(void) sentErrorCallback:(NSString*) callbackId andError:(NSString*) error {

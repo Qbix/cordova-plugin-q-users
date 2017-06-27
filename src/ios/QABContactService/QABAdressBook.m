@@ -34,6 +34,24 @@
     }
     return qAdressBook;
 }
+    
++(void) requestPermission:(void (^)(BOOL)) callback {
+    [self resolvePermissionAccess:ABAddressBookCreate() withCallback:callback];
+}
+    
+- (instancetype)init {
+    self = [super init];
+    if(self) {
+        _addressBook = ABAddressBookCreate();
+        dispatch_async(dispatch_get_main_queue(), ^ {
+            ABAddressBookRegisterExternalChangeCallback(_addressBook, addressBookChanged, (__bridge void *)self);
+        });
+        
+        [QABAdressBook resolvePermissionAccess:_addressBook withCallback:nil];
+        
+    }
+    return self;
+}
 
 void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void *context)
 {
@@ -44,37 +62,39 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
     }
 }
 
-- (instancetype)init {
-    self = [super init];
-    if(self) {
-        _addressBook = ABAddressBookCreate();
-        [self resolvePermissionAccess:_addressBook];
-        dispatch_async(dispatch_get_main_queue(), ^ {
-            ABAddressBookRegisterExternalChangeCallback(_addressBook, addressBookChanged, (__bridge void *)self);
-        });
-    }
-    return self;
-}
-
--(void) resolvePermissionAccess:(ABAddressBookRef) addressBook {
++(void) resolvePermissionAccess:(ABAddressBookRef) addressBook withCallback:(void (^)(BOOL)) callback {
     ABAuthorizationStatus status = ABAddressBookGetAuthorizationStatus();
-    switch (status)
-    {
+    switch (status) {
         case kABAuthorizationStatusDenied:
         case kABAuthorizationStatusRestricted: {
-            // show alert that need enable
-            NSException *e = [NSException
-                              exceptionWithName:@"QABAccessDeniedException"
-                              reason:@"Access Denied"
-                              userInfo:nil];
-            @throw e;
+            if(callback != nil) {
+                callback(NO);
+            } else {
+                // show alert that need enable
+                NSException *e = [NSException
+                                  exceptionWithName:@"QABAccessDeniedException"
+                                  reason:@"Access Denied"
+                                  userInfo:nil];
+                @throw e;
+            }
         }
             break;
         case kABAuthorizationStatusNotDetermined: {
-            ABAddressBookRequestAccessWithCompletion(addressBook, nil);
+            if(callback!= nil) {
+                ABAddressBookRequestAccessWithCompletion(addressBook, ^(bool granted, CFErrorRef error) {
+                    callback(granted);
+                });
+            } else {
+                ABAddressBookRequestAccessWithCompletion(addressBook, nil);
+            }
+            break;
         }
         default:
+        if(callback != nil) {
+            callback(YES);
+        } else {
             return;
+        }
     }
 }
 

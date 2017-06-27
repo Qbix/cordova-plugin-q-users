@@ -21,6 +21,7 @@ typedef enum QABGroupMemberFilter:NSInteger {
 
 @interface QABAdressBook : NSObject
 +(QABAdressBook*) sharedInstance;
++(void) requestPermission:(void (^)(BOOL)) callback;
 -(ABRecordRef) getRecordForId:(ABRecordID) recordId;
 @end
 
