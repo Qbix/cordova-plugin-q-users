@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+        id="com.q.users.cordova"
+        version="0.0.2">
+
+  <name>Q.Users.Cordova</name>
+
+  <engines>
+    <engine name="cordova" version=">=3.4.0"/>
+  </engines>
+
+  <dependency id="cordova-plugin-contacts"/>
+
+  <js-module src="www/q_users_cordova.js" name="Q.Users.Cordova">
+    <clobbers target="Q.Users.Cordova" />
+  </js-module>
+
+  <js-module src="www/lib/md5.js" name="Q.Users.Cordova.md5">
+    <clobbers target="Q.Users.Cordova.md5" />
+  </js-module>
+
+  <js-module src="www/lib/QGroupsError.js" name="Q.Users.Cordova.QGroupsError">
+    <clobbers target="Q.Users.Cordova.QGroupsError" />
+  </js-module>
+
+  <platform name="android">
+    <config-file target="res/xml/config.xml" parent="/*">
+      <feature name="QUsersCordova">
+        <param name="android-package" value="com.q.users.cordova.plugin.QUsersCordova"/>
+      </feature>
+    </config-file>
+
+    <source-file src="src/android/QUsersCordova.java" target-dir="src/com/q/users/cordova/plugin/"/>
+  </platform>
+
+  <platform name="ios">
+    <config-file target="config.xml" parent="/widget">
+      <feature name="QUsersCordova">
+        <param name="ios-package" value="QUsersCordova" />
+      </feature>
+    </config-file>
+
+    <header-file src="src/ios/QUsersCordova.h" target-dir="QUsersCordovaPlugin"/>
+    <source-file src="src/ios/QUsersCordova.m" target-dir="QUsersCordovaPlugin"/>
+    <header-file src="src/ios/QABContactService/ABContactService.h" target-dir="QUsersCordovaPlugin"/>
+    <header-file src="src/ios/QABContactService/QABAdressBook.h" target-dir="QUsersCordovaPlugin"/>
+    <source-file src="src/ios/QABContactService/QABAdressBook.m" target-dir="QUsersCordovaPlugin"/>
+    <header-file src="src/ios/QABContactService/QABContact.h" target-dir="QUsersCordovaPlugin"/>
+    <source-file src="src/ios/QABContactService/QABContact.m" target-dir="QUsersCordovaPlugin"/>
+    <header-file src="src/ios/QABContactService/QABGroup.h" target-dir="QUsersCordovaPlugin"/>
+    <source-file src="src/ios/QABContactService/QABGroup.m" target-dir="QUsersCordovaPlugin"/>
+
+  </platform>
+
+</plugin>

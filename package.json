@@ -1,0 +1,23 @@
+{
+  "name": "cordova-plugin-q-users",
+  "version": "0.3.3",
+  "description": "Q.Users.Cordova plugin for working with Groups",
+  "cordova": {
+    "id": "cordova-plugin-q-users",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://kvofreelance@bitbucket.org/qbixtemp/cordova-pluign-q-users.git"
+  },
+  "keywords": [
+    "cordova",
+    "q",
+    "qbix"
+  ],
+  "author": "Qbix",
+  "license": "Apache-2.0"
+}
