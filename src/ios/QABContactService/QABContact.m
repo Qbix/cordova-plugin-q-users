@@ -46,27 +46,58 @@
 -(NSString*) fullName {
     ABRecordRef recordRef = [self getContact];
     
-    NSString* firstName = (__bridge NSString*)ABRecordCopyValue(recordRef, kABPersonFirstNameProperty);
-    NSString* lastName = (__bridge NSString*)ABRecordCopyValue(recordRef, kABPersonLastNameProperty);
+    NSString* firstName = [self firstName];
+    NSString* lastName = [self lastName];
     NSString* middleName = (__bridge NSString*)ABRecordCopyValue(recordRef, kABPersonMiddleNameProperty);
     
-    NSMutableString* fullName = [NSMutableString string];
+    NSString* fullName = @"";
     if(firstName) {
-        [fullName appendString:[NSString stringWithFormat:@"%@ ", firstName]];
+        fullName = [NSString stringWithFormat:@"%@%@ ", fullName, firstName];
     }
     
     if(lastName) {
-        [fullName appendString:[NSString stringWithFormat:@"%@ ", lastName]];
+        fullName = [NSString stringWithFormat:@"%@%@ ", fullName, lastName];
     }
     
     if( middleName) {
-        [fullName appendString:middleName];
+        fullName = [NSString stringWithFormat:@"%@%@", fullName, middleName];
     }
     
     return fullName;
 }
 
+-(NSString*) firstName {
+    ABRecordRef recordRef = [self getContact];
+    
+    NSString* firstName = (__bridge NSString*)ABRecordCopyValue(recordRef, kABPersonFirstNameProperty);
+    
+    return firstName;
+}
+
+-(NSString*) lastName {
+    ABRecordRef recordRef = [self getContact];
+    
+    NSString* lastName = (__bridge NSString*)ABRecordCopyValue(recordRef, kABPersonLastNameProperty);
+    return lastName;
+}
+
+-(NSString*) companyName {
+    ABRecordRef recordRef = [self getContact];
+    
+    NSString* companyName = (__bridge NSString*)ABRecordCopyValue(recordRef, kABPersonOrganizationProperty);
+    return companyName;
+}
+
 - (NSString*) phone {
+    NSArray *phones = [self phones];
+    
+    if(phones == nil || [phones count] == 0) {
+        return nil;
+    }
+    return [phones objectAtIndex:0];
+}
+
+- (NSArray<NSString*>*) phones {
     ABRecordRef recordRef = [self getContact];
     
     NSMutableArray *phones = [NSMutableArray array];
@@ -76,11 +107,31 @@
         [phones addObjectsFromArray:phonesArray];
         CFRelease(phonesProperty);
     }
+    
+    return [phones copy];
+}
 
-    if(phones == nil || [phones count] == 0) {
+- (NSString*) email {
+    NSArray *emails = [self emails];
+    
+    if(emails == nil || [emails count] == 0) {
         return nil;
     }
-    return [phones objectAtIndex:0];
+    return [emails objectAtIndex:0];
+}
+
+- (NSArray<NSString*>*) emails {
+    ABRecordRef recordRef = [self getContact];
+    
+    NSMutableArray *emails = [NSMutableArray array];
+    ABMultiValueRef emailsProperty = ABRecordCopyValue(recordRef, kABPersonEmailProperty);
+    if (emailsProperty != NULL) {
+        NSArray *emailsArray = (__bridge NSArray*)ABMultiValueCopyArrayOfAllValues(emailsProperty);
+        [emails addObjectsFromArray:emailsArray];
+        CFRelease(emailsProperty);
+    }
+    
+    return [emails copy];
 }
 
 -(NSDate*) timeAdded {
