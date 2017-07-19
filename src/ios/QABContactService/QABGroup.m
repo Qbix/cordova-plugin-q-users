@@ -20,6 +20,7 @@
     if(self) {
         _groupIdentifier = -1;
         _groupType = QABGroupTypeAllContacts;
+        _membersSorting = QABGroupMemberSortingDefault;
     }
     return self;
 }
@@ -53,6 +54,28 @@
 
 -(NSArray<QABContact*>*) getMembers {
     return self.members;
+}
+
+-(NSArray<QABContact*>*) getSortedMembers {
+    NSSortDescriptor* sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"lastName" ascending:YES selector:@selector(localizedCompare:)];;
+    
+    switch (_membersSorting) {
+        case QABGroupMemberSortingDefault:
+        case QABGroupMemberSortingByLast:
+            sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"lastName" ascending:YES selector:@selector(localizedCompare:)];
+            break;
+        case QABGroupMemberSortingByFirst:
+            sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"firstName" ascending:YES selector:@selector(localizedCompare:)];
+            break;
+        case QABGroupMemberSortingByCompany:
+            sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"companyName" ascending:YES selector:@selector(localizedCompare:)];
+            break;
+        default:
+            break;
+    }
+    
+    
+    return [self.members sortedArrayUsingDescriptors:[NSArray arrayWithObject:sortDescriptor]];
 }
 
 - (BOOL)isEqual:(id)object {
