@@ -17,6 +17,7 @@
 -(ABRecordID) identifier;
 -(NSString*) firstName;
 -(NSString*) lastName;
+-(NSString*) middleName;
 -(NSString*) fullName;
 -(NSString*) companyName;
 -(NSString*) phone;

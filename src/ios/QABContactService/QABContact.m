@@ -81,6 +81,13 @@
     return lastName;
 }
 
+-(NSString*) middleName {
+    ABRecordRef recordRef = [self getContact];
+    
+    NSString* middleName = (__bridge NSString*)ABRecordCopyValue(recordRef, kABPersonMiddleNameProperty);
+    return middleName;
+}
+
 -(NSString*) companyName {
     ABRecordRef recordRef = [self getContact];
     

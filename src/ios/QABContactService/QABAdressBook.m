@@ -277,7 +277,9 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
         return YES;
     }];
     
-    return [[QABGroup alloc] initWithType:QABGroupTypeAllContacts andName:@"All Contacts" andMembers:[self mapContacts:contacts]];
+    QABGroup *group = [[QABGroup alloc] initWithType:QABGroupTypeAllContacts andName:@"All Contacts" andMembers:[self mapContacts:contacts]];
+    [group setMembersSorting:QABGroupMemberSortingDefault];
+    return group;
 }
 
 -(QABGroup*) getGroupFiltered:(QABGroupMemberFilter) filter {
