@@ -277,7 +277,9 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
         return YES;
     }];
     
-    return [[QABGroup alloc] initWithType:QABGroupTypeAllContacts andName:@"All Contacts" andMembers:[self mapContacts:contacts]];
+    QABGroup *group = [[QABGroup alloc] initWithType:QABGroupTypeAllContacts andName:@"All Contacts" andMembers:[self mapContacts:contacts]];
+    [group setMembersSorting:QABGroupMemberSortingDefault];
+    return group;
 }
 
 -(QABGroup*) getGroupFiltered:(QABGroupMemberFilter) filter {
@@ -381,7 +383,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 }
 
 -(BOOL) addMember:(QABContact*) member toGroup:(NSNumber*) groupId {
-    [self addMembers:@[member] toGroup:groupId];
+    return [self addMembers:@[member] toGroup:groupId];
 }
 
 -(BOOL) removeMembers:(NSArray<QABContact*>*) members fromGroup:(NSNumber*) groupId {
@@ -420,7 +422,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 }
 
 -(BOOL) removeMember:(QABContact*) member fromGroup:(NSNumber*) groupId {
-    [self removeMembers:@[member] fromGroup:groupId];
+    return [self removeMembers:@[member] fromGroup:groupId];
 }
 
 @end

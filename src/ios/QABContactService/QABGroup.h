@@ -15,8 +15,18 @@
 typedef enum QABGroupType:NSInteger {
     QABGroupTypeAllContacts,
     QABGroupTypeNative,
-    QABGroupTypeFiltered
+    QABGroupTypeFiltered,
+    QABGroupTypeCustom
 }QABGroupType;
+
+typedef enum QABGroupMemberSorting:NSInteger {
+    QABGroupMemberSortingDefault,
+    QABGroupMemberSortingByFirst,
+    QABGroupMemberSortingByLast,
+    QABGroupMemberSortingByCompany,
+    QABGroupMemberSortingByRecentAdd
+}QABGroupMemberSorting;
+
 
 @interface QABGroup : NSObject
 
@@ -24,10 +34,13 @@ typedef enum QABGroupType:NSInteger {
 -(instancetype _Nonnull ) initWithABGroupID:(ABRecordID) group andName:(NSString* _Nonnull) name andMembers:(NSArray<QABContact*>* _Nonnull) members;
 
 
+@property(nonatomic, assign) QABGroupMemberSorting membersSorting;
+
 @property(nonatomic, readonly, strong) NSString * _Nonnull name;
 @property(nonatomic, readonly, assign) NSInteger count;
 @property(nonatomic, assign, readonly) ABRecordID groupIdentifier;
 
 -(NSArray<QABContact*>*_Nonnull) getMembers;
+-(NSArray<QABContact*>*_Nonnull) getSortedMembers;
 
 @end

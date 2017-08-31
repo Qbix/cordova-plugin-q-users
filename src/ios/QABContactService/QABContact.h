@@ -15,8 +15,15 @@
 -(instancetype) initWithABRecordID:(ABRecordID) contact;
 
 -(ABRecordID) identifier;
+-(NSString*) firstName;
+-(NSString*) lastName;
+-(NSString*) middleName;
 -(NSString*) fullName;
+-(NSString*) companyName;
 -(NSString*) phone;
+-(NSArray<NSString*>*) phones;
+-(NSString*) email;
+-(NSArray<NSString*>*) emails;
 -(NSDate*) timeAdded;
 
 @end
