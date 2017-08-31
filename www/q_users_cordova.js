@@ -76,13 +76,13 @@ var Labels = {
      * @param {Function} onSuccess - gets new label info as param 1
      * @param {Function} onFailure - gets document error code as param 1
      */
-    save(info, successCallback, errorCallback) {
+    save: function(info, successCallback, errorCallback) {
         this.exec("save", [(info.labelId ? info.labelId : -1), info.title], successCallback, errorCallback);
     },
     /**
      * Remove an existing label
      */
-    remove(labelId, successCallback, errorCallback) {
+    remove: function(labelId, successCallback, errorCallback) {
         this.exec("remove", [labelId], successCallback, errorCallback);
     },
     /**
@@ -92,7 +92,7 @@ var Labels = {
      * @param onSuccess
      * @param onFailure - gets error code and list of contactIds which were not added
      */
-    addContact(labelId, contactIds, successCallback, errorCallback) {
+    addContact: function(labelId, contactIds, successCallback, errorCallback) {
         this.exec("addContact", [labelId, contactIds], successCallback, errorCallback);
     },
     /**
@@ -102,7 +102,7 @@ var Labels = {
      * @param onSuccess
      * @param onFailure - gets error code and list of contactIds which were not added
      */
-    removeContact(labelId, contactIds, successCallback, errorCallback) {
+    removeContact: function(labelId, contactIds, successCallback, errorCallback) {
         this.exec("removeContact", [labelId, contactIds], successCallback, errorCallback);
     },
     /**
@@ -113,7 +113,7 @@ var Labels = {
      * @param onSuccess
      * @param onFailure - gets error code and list of contactIds which were not added
      */
-    setForContact(contactId, labelIds, successCallback, errorCallback) {
+    setForContact: function(contactId, labelIds, successCallback, errorCallback) {
         this.exec("setForContact", [contactId, labelIds], successCallback, errorCallback);
     }
 }
