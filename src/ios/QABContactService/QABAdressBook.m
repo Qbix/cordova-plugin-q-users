@@ -110,6 +110,14 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
     self.cachedGroups = nil;
 }
 
+-(ABRecordRef) getGroupRecordForId:(ABRecordID) recordId {
+    if(recordId == kABRecordInvalidID) {
+        return NULL;
+    }
+    
+    return ABAddressBookGetGroupWithRecordID(_addressBook, recordId);
+}
+
 -(ABRecordRef) getRecordForId:(ABRecordID) recordId {
     if(recordId == kABRecordInvalidID) {
         return NULL;
@@ -190,11 +198,11 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
                 for(QABGroup* group in groups) {
                     BOOL result = [[group getMembers] containsObject:[[QABContact alloc] initWithABRecordID:ABRecordGetRecordID(contact)]];
                     if(result) {
-                        return YES;
+                        return NO;
                     }
                 }
                 
-                return NO;
+                return YES;
             }];
 
             break;
@@ -311,7 +319,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 
 -(QABGroup*) renameGroup:(NSNumber*) groupId to:(NSString*) name {
     CFErrorRef error = NULL;
-    ABRecordRef groupRef = [self getRecordForId:[groupId intValue]];
+    ABRecordRef groupRef = [self getGroupRecordForId:[groupId intValue]];
     if (groupRef == kABInvalidPropertyType) {
         return nil;
     }
@@ -327,7 +335,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 }
 
 -(BOOL) removeGroup:(NSNumber*) groupId {
-    ABRecordRef groupRef = [self getRecordForId:[groupId intValue]];
+    ABRecordRef groupRef = [self getGroupRecordForId:[groupId intValue]];
     if (groupRef == kABInvalidPropertyType) {
         return NO;
     }
@@ -348,7 +356,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 }
 
 -(BOOL) addMembers:(NSArray<QABContact*>*) members toGroup:(NSNumber*) groupId {
-    ABRecordRef groupRef = [self getRecordForId:[groupId intValue]];
+    ABRecordRef groupRef = [self getGroupRecordForId:[groupId intValue]];
     if(groupRef == kABInvalidPropertyType) {
         return NO;
     }
@@ -367,7 +375,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
             statusSuccess = NO;
             break;
         }
-        CFRelease(memberRef);
+//        CFRelease(memberRef);
     }
     if(!statusSuccess) {
         ABAddressBookRevert(_addressBook);
@@ -387,7 +395,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 }
 
 -(BOOL) removeMembers:(NSArray<QABContact*>*) members fromGroup:(NSNumber*) groupId {
-    ABRecordRef groupRef = [self getRecordForId:[groupId intValue]];
+    ABRecordRef groupRef = [self getGroupRecordForId:[groupId intValue]];
     if(groupRef == kABInvalidPropertyType) {
         return NO;
     }
@@ -406,7 +414,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
             statusSuccess = NO;
             break;
         }
-        CFRelease(memberRef);
+//        CFRelease(memberRef);
     }
     if(!statusSuccess) {
         ABAddressBookRevert(_addressBook);
