@@ -9,8 +9,6 @@
     <engine name="cordova" version=">=3.4.0"/>
   </engines>
 
-  <preference name="CONTACTS_USAGE_DESCRIPTION" default="" />
-
   <dependency id="cordova-plugin-contacts"/>
 
   <js-module src="www/q_users_cordova.js" name="Q.Users.Cordova">
