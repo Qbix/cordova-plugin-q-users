@@ -280,6 +280,18 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
     return self.cachedGroups;
 }
 
+-(NSArray<QABGroup*>*) getGroupsWith:(QABContact*) member {
+    NSMutableArray<QABGroup*> *groupsWithMember = [NSMutableArray array];
+    for (QABGroup* group in [self getGroups]) {
+        if([[group getMembers] containsObject:member]) {
+            [groupsWithMember addObject:group];
+            continue;
+        }
+    }
+    
+    return [NSArray arrayWithArray:groupsWithMember];
+}
+
 -(QABGroup*) getGroupAllContacts {
     NSArray*contacts = [self getContactsWithMatchBlock:^BOOL(ABRecordRef *contact) {
         return YES;

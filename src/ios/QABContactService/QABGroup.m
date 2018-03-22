@@ -10,7 +10,8 @@
 
 @interface QABGroup()
 @property(nonatomic, assign) QABGroupType groupType;
-@property(nonatomic, strong) NSArray<QABContact*> *members;
+@property(nonatomic, assign) ABRecordRef cachedGroup;
+@property(nonatomic, strong) NSMutableArray<QABContact*> *members;
 @end
 
 @implementation QABGroup
@@ -30,7 +31,7 @@
     if(self) {
         _groupType = qGroupType;
         _name = name;
-        _members = members;
+        _members = [NSMutableArray arrayWithArray:members];
     }
     return self;
 }
@@ -41,7 +42,7 @@
         _groupIdentifier = groupId;
         _groupType = QABGroupTypeNative;
         _name = name;
-        _members = members;
+        _members = [NSMutableArray arrayWithArray:members];
     }
     return self;
 }

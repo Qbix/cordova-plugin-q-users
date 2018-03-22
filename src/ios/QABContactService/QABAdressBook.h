@@ -27,6 +27,7 @@ typedef enum QABGroupMemberFilter:NSInteger {
 
 @interface QABAdressBook(ABGroups)
 -(NSArray<QABGroup*>*) getGroups;
+-(NSArray<QABGroup*>*) getGroupsWith:(QABContact*) membeer;
 -(QABGroup*) getGroupAllContacts;
 -(QABGroup*) getGroupFiltered:(QABGroupMemberFilter) filter;
 -(QABGroup*) getGroup:(NSNumber*) groupId;
