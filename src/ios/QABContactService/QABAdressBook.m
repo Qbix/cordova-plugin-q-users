@@ -38,6 +38,10 @@
 +(void) requestPermission:(void (^)(BOOL)) callback {
     [self resolvePermissionAccess:ABAddressBookCreate() withCallback:callback];
 }
+
+-(ABAddressBookRef) getAddressBookRef {
+    return _addressBook;
+}
     
 - (instancetype)init {
     self = [super init];
@@ -443,6 +447,38 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 
 -(BOOL) removeMember:(QABContact*) member fromGroup:(NSNumber*) groupId {
     return [self removeMembers:@[member] fromGroup:groupId];
+}
+
+-(BOOL) removeMember:(ABRecordRef) member {
+    if(member == nil && [member identifier] == kABInvalidPropertyType) {
+        return false;
+    }
+    CFErrorRef error = NULL;
+    if(!ABAddressBookRemoveRecord(_addressBook, member, &error)) {
+        return false;
+    }
+    error = NULL;
+    if(!ABAddressBookSave(_addressBook, &error)) {
+        return false;
+    }
+    
+    return true;
+}
+
+-(BOOL) addMember:(ABRecordRef) member {
+    if(member == nil && [member identifier] == kABInvalidPropertyType) {
+        return false;
+    }
+    CFErrorRef error = NULL;
+    if(!ABAddressBookAddRecord(_addressBook, member, &error)) {
+        return false;
+    }
+    error = NULL;
+    if(!ABAddressBookSave(_addressBook, &error)) {
+        return false;
+    }
+    
+    return true;
 }
 
 @end

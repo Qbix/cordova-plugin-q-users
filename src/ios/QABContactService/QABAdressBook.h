@@ -23,6 +23,7 @@ typedef enum QABGroupMemberFilter:NSInteger {
 +(QABAdressBook*) sharedInstance;
 +(void) requestPermission:(void (^)(BOOL)) callback;
 -(ABRecordRef) getRecordForId:(ABRecordID) recordId;
+-(ABAddressBookRef) getAddressBookRef;
 @end
 
 @interface QABAdressBook(ABGroups)
@@ -38,5 +39,7 @@ typedef enum QABGroupMemberFilter:NSInteger {
 -(BOOL) addMembers:(NSArray<QABContact*>*) members toGroup:(NSNumber*) groupId;
 -(BOOL) removeMember:(QABContact*) member fromGroup:(NSNumber*) groupId;
 -(BOOL) removeMembers:(NSArray<QABContact*>*) members fromGroup:(NSNumber*) groupId;
+-(BOOL) addMember:(ABRecordRef) member;
+-(BOOL) removeMember:(ABRecordRef) member;
 @end
 
