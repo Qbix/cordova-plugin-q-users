@@ -40,18 +40,18 @@
 }
 
 -(ABAddressBookRef) getAddressBookRef {
-    return _addressBook;
+    return [[self addressBook] retain];
 }
     
 - (instancetype)init {
     self = [super init];
     if(self) {
-        _addressBook = ABAddressBookCreate();
+        [self setAddressBook:ABAddressBookCreate()];
         dispatch_async(dispatch_get_main_queue(), ^ {
-            ABAddressBookRegisterExternalChangeCallback(_addressBook, addressBookChanged, (__bridge void *)self);
+            ABAddressBookRegisterExternalChangeCallback([self addressBook], addressBookChanged, (__bridge void *)self);
         });
         
-        [QABAdressBook resolvePermissionAccess:_addressBook withCallback:nil];
+        [QABAdressBook resolvePermissionAccess:[self addressBook] withCallback:nil];
         
     }
     return self;
@@ -478,6 +478,14 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
         return false;
     }
     
+    return true;
+}
+
+-(BOOL) saveAddressBook {
+    CFErrorRef error = NULL;
+    if(!ABAddressBookSave(_addressBook, &error)) {
+        return false;
+    }
     return true;
 }
 

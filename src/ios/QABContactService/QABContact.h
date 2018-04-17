@@ -12,6 +12,7 @@
 
 @interface QABContact : NSObject
 
+-(instancetype) initWithABRecordRef:(ABRecordRef) recordRef;
 -(instancetype) initWithABRecordID:(ABRecordID) contact;
 -(ABRecordRef) getContact;
 

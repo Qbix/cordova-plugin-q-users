@@ -24,6 +24,10 @@
     return self;
 }
 
+-(instancetype) initWithABRecordRef:(ABRecordRef) recordRef {
+    return [[super init] initWithIdentifier:ABRecordGetRecordID(recordRef)];
+}
+
 -(instancetype) initWithABRecordID:(ABRecordID) contact {
     return [[super init] initWithIdentifier:contact];
 }
