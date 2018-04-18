@@ -16,6 +16,7 @@ import android.os.Bundle;
 
 import com.q.users.cordova.plugin.models.QbixGroup;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class QUsersCordova extends CordovaPlugin {
@@ -33,9 +34,10 @@ public class QUsersCordova extends CordovaPlugin {
 
     //Request code for the permissions picker (Pick is async and uses intents)
     private final int ALL_LABELS_REQ_CODE = 8;
-    private final int REMOVE_CONTACT_FROM_LABEL_REQ_CODE = 9;
-    private final int ADD_CONTACT_TO_LABEL_REQ_CODE = 10;
-    private final int REMOVE_LABEL_REQ_CODE = 11;
+    private final int LABELS_BY_SOURCE_ID_REQ_CODE = 9;
+    private final int REMOVE_CONTACT_FROM_LABEL_REQ_CODE = 10;
+    private final int ADD_CONTACT_TO_LABEL_REQ_CODE = 11;
+    private final int REMOVE_LABEL_REQ_CODE = 12;
 
     //Error codes for returning with error plugin result
     protected static final String UNKNOWN_ERROR = "unknown error";
@@ -75,7 +77,7 @@ public class QUsersCordova extends CordovaPlugin {
      */
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
 
-        this.callbackContext = callbackContext;
+        QUsersCordova.this.callbackContext = callbackContext;
         this.executeArgs = args;
         /**
          * Check to see if we are on an Android 1.X device.  If we are return an error as we
@@ -104,20 +106,19 @@ public class QUsersCordova extends CordovaPlugin {
             return true;
         }else if(action.equals(GET_ONE_OR_MORE_LABELS_ACTION)){
             if (PermissionHelper.hasPermission(this, READ)) {
-                //TODO: get method
+                this.cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                            getLabels(executeArgs);
+                    }
+                });
             } else {
-                getReadPermission(ALL_LABELS_REQ_CODE);
+                getReadPermission(LABELS_BY_SOURCE_ID_REQ_CODE);
             }
         } else if (action.equals(REMOVE_CONTACT_FROM_LABEL_ACTION)) {
             if (PermissionHelper.hasPermission(this, WRITE)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
-                        try {
-                            removeContactFromLabel(executeArgs);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
-                        }
+                        removeContactFromLabel(executeArgs);
                     }
                 });
             } else {
@@ -127,13 +128,8 @@ public class QUsersCordova extends CordovaPlugin {
         } else if (action.equals(ADD_CONTACT_TO_LABEL_ACTION)) {
             if (PermissionHelper.hasPermission(this, WRITE)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
-                    public void run() {
-                        try {
+                    public void run() {                  
                             addContactToLabel(executeArgs);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
-                        }
                     }
                 });
             } else {
@@ -157,13 +153,11 @@ public class QUsersCordova extends CordovaPlugin {
 
     /**
      * Gets all labels asynchronously and set result to callback context's as success.
-     * It may get empty list if there are no visible labels or all are visible ones are marked as
-     * deleted.
      */
     private void getLabels() {
         this.cordova.getThreadPool().execute(new Runnable() {
             public void run() {
-                List<QbixGroup> labels = groupAccessor.getAllLabels(this.cordova);
+                List<QbixGroup> labels = groupAccessor.getAllLabels();
                 JSONArray jsonGroups = new JSONArray();
                 for (QbixGroup group :
                         labels) {
@@ -176,6 +170,39 @@ public class QUsersCordova extends CordovaPlugin {
                 }
             }
         });
+    }
+
+    /**
+     * Gets all labels that have given sourceIds and set result to callback context's as success.
+     *
+     * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
+     */
+    private void getLabels(JSONArray args) {
+        try {
+            List<String> sourceIdList = new ArrayList<>();
+            for (int i = 0; i < args.length(); i++) {
+                JSONObject sourceIdJson = args.getJSONObject(i);
+                String sourceId = sourceIdJson.getString("labelId");
+                sourceIdList.add(sourceId);
+            }
+            String[] sourceIdArray = new String[sourceIdList.size()];
+            for (int i = 0; i < sourceIdList.size(); i++) {
+                sourceIdArray[i]=sourceIdList.get(i);
+            }
+            List<QbixGroup> labels = groupAccessor.getLabelsBySourceId(sourceIdArray);
+            JSONArray jsonGroups = new JSONArray();
+            for (QbixGroup group :
+                    labels) {
+                jsonGroups.put(group.toJson());
+            }
+            if (labels != null) {
+                callbackContext.success(jsonGroups);
+            } else {
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
+            }
+        } catch (JSONException e) {
+            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+        }
     }
 
     /**
@@ -257,7 +284,7 @@ public class QUsersCordova extends CordovaPlugin {
                                           int[] grantResults) {
         for (int r : grantResults) {
             if (r == PackageManager.PERMISSION_DENIED) {
-                this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, PERMISSION_DENIED_ERROR));
+                QUsersCordova.this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, PERMISSION_DENIED_ERROR));
                 return;
             }
         }
@@ -268,12 +295,7 @@ public class QUsersCordova extends CordovaPlugin {
             case REMOVE_CONTACT_FROM_LABEL_REQ_CODE:
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
-                        try {
                             removeContactFromLabel(executeArgs);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
-                        }
                     }
                 });
                 break;
@@ -281,6 +303,13 @@ public class QUsersCordova extends CordovaPlugin {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         removeLabelFromDatabase(executeArgs);
+                    }
+                });
+                break;
+            case LABELS_BY_SOURCE_ID_REQ_CODE:
+                this.cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                            getLabels(executeArgs);
                     }
                 });
                 break;
@@ -294,7 +323,7 @@ public class QUsersCordova extends CordovaPlugin {
      * because picking a contact doesn't take in any arguments.
      */
     public void onRestoreStateForActivityResult(Bundle state, CallbackContext callbackContext) {
-        this.callbackContext = callbackContext;
+        QUsersCordova.this.callbackContext = callbackContext;
         this.groupAccessor = new GroupAccessor(this.cordova);
     }
 }
