@@ -77,7 +77,7 @@ public class GroupHelper {
      * @param rawIds         List of rawContactIds that needed to be converted.
      * @return List converted contactIds
      */
-    public List<Integer> getContactIds(HashMap<String, String> rawIdContactId, List<Integer> rawIds) {
+    public static List<Integer> getContactIds(HashMap<String, String> rawIdContactId, List<Integer> rawIds) {
         List<Integer> contactIds = new ArrayList<>();
         for (int i = 0; i < rawIdContactId.size(); i++) {
             if (!contactIds.contains(Integer.valueOf(rawIdContactId.get(String.valueOf(rawIds.get(i)))))) {

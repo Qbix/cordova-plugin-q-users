@@ -11,6 +11,8 @@ import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.util.Log;
 
+import org.apache.cordova.CordovaInterface;
+
 import com.q.users.cordova.plugin.models.AccNameGroup;
 import com.q.users.cordova.plugin.models.QbixGroup;
 import com.q.users.cordova.plugin.models.RawIdLabelId;
@@ -196,7 +198,7 @@ public class GroupAccessor {
             }
         } catch (RemoteException e) {
             e.printStackTrace();
-            return e.getMessage()
+            return e.getMessage();
         } catch (OperationApplicationException e) {
             e.printStackTrace();
             return e.getMessage();
