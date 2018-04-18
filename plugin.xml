@@ -34,8 +34,9 @@
     </config-file>
 
     <source-file src="src/android/GroupAccessor.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/QbixGroup.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/models/QbixGroup.java" target-dir="src/com/q/users/cordova/plugin/"/>
     <source-file src="src/android/QUsersCordova.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/models/RawIdLabelId.java" target-dir="src/com/q/users/cordova/plugin/"/>
   </platform>
 
   <platform name="ios">
