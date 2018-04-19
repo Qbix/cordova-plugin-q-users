@@ -14,7 +14,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
-import com.q.users.cordova.plugin.models.QbixGroup;
+import com.q.users.cordova.plugin.QbixGroup;
 
 import java.util.ArrayList;
 import java.util.List;

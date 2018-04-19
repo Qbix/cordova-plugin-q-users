@@ -30,24 +30,27 @@
       </feature>
     </config-file>
     <config-file target="AndroidManifest.xml" parent="/manifest">
+      <uses-permission android:name="android.permission.READ_CONTACTS" />
+      <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+      <uses-permission android:name="android.permission.GET_ACCOUNTS" />
       <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
     </config-file>
 
     <source-file src="src/android/GroupAccessor.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/QbixGroup.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QbixGroup.java" target-dir="src/com/q/users/cordova/plugin/"/>
     <source-file src="src/android/QUsersCordova.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/RawIdLabelId.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/AccNameGroup.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/QbixAddress.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/QbixContact.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/QbixEmail.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/QbixIm.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/QbixName.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/QbixOrganization.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/QbixPhone.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/QbixPhoto.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/models/QbixWebsite.java" target-dir="src/com/q/users/cordova/plugin/"/>
-    <source-file src="src/android/utils/GroupHelper.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/RawIdLabelId.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/AccNameGroup.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QbixAddress.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QbixContact.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QbixEmail.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QbixIm.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QbixName.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QbixOrganization.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QbixPhone.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QbixPhoto.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QbixWebsite.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/GroupHelper.java" target-dir="src/com/q/users/cordova/plugin/"/>
   </platform>
 
   <platform name="ios">

@@ -1,4 +1,4 @@
-package com.q.users.cordova.plugin.utils;
+package com.q.users.cordova.plugin;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -9,7 +9,7 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
 
-import com.q.users.cordova.plugin.models.RawIdLabelId;
+import com.q.users.cordova.plugin.RawIdLabelId;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,7 +79,7 @@ public class GroupHelper {
      */
     public static List<Integer> getContactIds(HashMap<String, String> rawIdContactId, List<Integer> rawIds) {
         List<Integer> contactIds = new ArrayList<>();
-        for (int i = 0; i < rawIdContactId.size(); i++) {
+        for (int i = 0; i < rawIds.size(); i++) {
             if (!contactIds.contains(Integer.valueOf(rawIdContactId.get(String.valueOf(rawIds.get(i)))))) {
                 contactIds.add(Integer.valueOf(rawIdContactId.get(String.valueOf(rawIds.get(i)))));
                 Log.i("contactId_checker", "rawId: " + rawIds.get(i) + "\ncontactId: " + rawIdContactId.get(String.valueOf(rawIds.get(i))));

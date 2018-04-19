@@ -13,10 +13,10 @@ import android.util.Log;
 
 import org.apache.cordova.CordovaInterface;
 
-import com.q.users.cordova.plugin.models.AccNameGroup;
-import com.q.users.cordova.plugin.models.QbixGroup;
-import com.q.users.cordova.plugin.models.RawIdLabelId;
-import com.q.users.cordova.plugin.utils.GroupHelper;
+import com.q.users.cordova.plugin.AccNameGroup;
+import com.q.users.cordova.plugin.QbixGroup;
+import com.q.users.cordova.plugin.RawIdLabelId;
+import com.q.users.cordova.plugin.GroupHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -89,14 +89,16 @@ public class GroupAccessor {
                 }
             }
             List<Integer> contactIds = GroupHelper.getContactIds(rawIdContactIdPair, rawIds);
-            if (!sourceIds.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)))) {
-                group.contactIds = contactIds;
-                sourceIds.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
-                labels.add(group);
-            } else {
-                int index = sourceIds.indexOf(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
-                labels.get(index).contactIds.addAll(contactIds);
-                Log.i("group_info_checker", "group: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)) + " is existing");
+            if (group.sourceId != null) {
+                if (!sourceIds.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)))) {
+                    group.contactIds = contactIds;
+                    sourceIds.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
+                    labels.add(group);
+                } else {
+                    int index = sourceIds.indexOf(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
+                    labels.get(index).contactIds.addAll(contactIds);
+                    Log.i("group_info_checker", "group: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)) + " is existing");
+                }
             }
 
         }
