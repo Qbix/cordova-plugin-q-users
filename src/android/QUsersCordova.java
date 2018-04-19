@@ -27,6 +27,7 @@ public class QUsersCordova extends CordovaPlugin {
     private final String REMOVE_CONTACT_FROM_LABEL_ACTION = "removeContact";
     private final String ADD_CONTACT_TO_LABEL_ACTION = "addContact";
     private final String REMOVE_LABEL_ACTION = "remove";
+    private final String SAVE_NEW_LABEL_OR_EDIT = "save";
 
     private final String READ = Manifest.permission.READ_CONTACTS;
     private final String WRITE = Manifest.permission.WRITE_CONTACTS;
@@ -38,6 +39,7 @@ public class QUsersCordova extends CordovaPlugin {
     private final int REMOVE_CONTACT_FROM_LABEL_REQ_CODE = 10;
     private final int ADD_CONTACT_TO_LABEL_REQ_CODE = 11;
     private final int REMOVE_LABEL_REQ_CODE = 12;
+    private final int SAVE_NEW_LABEL_OR_EDIT_REQ_CODE = 13;
 
     //Error codes for returning with error plugin result
     protected static final String UNKNOWN_ERROR = "unknown error";
@@ -147,6 +149,16 @@ public class QUsersCordova extends CordovaPlugin {
                 getAccountPermission(REMOVE_LABEL_REQ_CODE);
             }
             return true;
+        } else if (action.equals(SAVE_NEW_LABEL_OR_EDIT)) {
+            if (PermissionHelper.hasPermission(this, ACCOUNTS)) {
+                this.cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                        saveOrEditLabel(executeArgs);
+                    }
+                });
+            } else {
+                getAccountPermission(SAVE_NEW_LABEL_OR_EDIT_REQ_CODE);
+            }
         }
         return false;
     }
@@ -280,6 +292,37 @@ public class QUsersCordova extends CordovaPlugin {
 
     }
 
+    /**
+     * Edits existing label's title if sourceId specified and adds new label if not (sourceId = -1).
+     *
+     * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
+     */
+    private void saveOrEditLabel(JSONArray args) {
+        try {
+            String sourceId = args.getString(0);
+            String title = args.getString(1);
+            if (sourceId.equals("-1")) {
+                //for not specified sourceId (need to add new label)
+                String addMessage = groupAccessor.addLabelToDatabase(title);
+                if (addMessage.equals(SUCCESS)) {
+                    callbackContext.success();
+                } else {
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, addMessage));
+                }
+            } else {
+                //for specified sourceId (need to edit existing one)
+                String editMessage = groupAccessor.editLabelInDatabase(sourceId, title);
+                if (editMessage.equals(SUCCESS)) {
+                    callbackContext.success();
+                } else {
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, editMessage));
+                }
+            }
+        } catch (JSONException e) {
+            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+        }
+    }
+
     public void onRequestPermissionResult(int requestCode, String[] permissions,
                                           int[] grantResults) {
         for (int r : grantResults) {
@@ -310,6 +353,13 @@ public class QUsersCordova extends CordovaPlugin {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                             getLabels(executeArgs);
+                    }
+                });
+                break;
+            case SAVE_NEW_LABEL_OR_EDIT_REQ_CODE:
+                this.cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                        saveOrEditLabel(executeArgs);
                     }
                 });
                 break;
