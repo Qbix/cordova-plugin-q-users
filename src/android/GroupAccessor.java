@@ -337,7 +337,7 @@ public class GroupAccessor {
             }
         } catch (RemoteException e) {
             e.printStackTrace();
-            e.getMessage();
+            return e.getMessage();
         } catch (OperationApplicationException e) {
             e.printStackTrace();
             return e.getMessage();
@@ -366,7 +366,7 @@ public class GroupAccessor {
             ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
         } catch (RemoteException e) {
             e.printStackTrace();
-            e.getMessage();
+            return e.getMessage();
         } catch (OperationApplicationException e) {
             e.printStackTrace();
             return e.getMessage();
