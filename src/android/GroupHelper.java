@@ -317,4 +317,50 @@ public class GroupHelper {
         }
         return labelIdArray;
     }
+
+    /**
+     * Gets all system related label ids.
+     *
+     * @param context Context instance for db interactions
+     * @return List of system related labelIds
+     */
+    public static List<String> getSystemIds(Context context) {
+        List<String> systemIds = new ArrayList<>();
+        Cursor cursor = context.getContentResolver().query(ContactsContract.Groups.CONTENT_URI,
+                new String[]{
+                        ContactsContract.Groups._ID
+                },
+                ContactsContract.Groups.TITLE + getSuffix(2),   //System related labels count
+                new String[]{"My Contacts", "Starred in Android"},   //System related labels' titles
+                null
+        );
+        while (cursor.moveToNext()) {
+            systemIds.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups._ID)));
+        }
+        cursor.close();
+        return systemIds;
+    }
+
+    /**
+     * Gets given rawContactId's account name.
+     *
+     * @param rawContactId rawContactId which account name wanted to be returned
+     * @return account name
+     */
+    public static String getRawContactIdAccountName(Context context, String rawContactId) {
+        String accountName = null;
+        Cursor cursor = context.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
+                new String[]{
+                        ContactsContract.RawContacts._ID,
+                        ContactsContract.RawContacts.ACCOUNT_NAME
+                },
+                ContactsContract.RawContacts._ID + "='" + rawContactId + "'",
+                null,
+                null);
+        while (cursor.moveToNext()) {
+            accountName = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME));
+        }
+        cursor.close();
+        return accountName;
+    }
 }

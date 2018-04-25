@@ -374,4 +374,114 @@ public class GroupAccessor {
         return QUsersCordova.SUCCESS;
     }
 
+/**
+     * Sets to contact given labels list.(if list is empty, then removes all labels from contact)
+     *
+     * @param contactId The contact id from which must be removed all labels.
+     * @param sourceIds List of sourceIds which labels wanted to be added.
+     * @return success message if succeed and exception message if failed
+     */
+    protected String setLabelListForContact(String contactId, List<String> sourceIds) {
+        String[] rawIds = GroupHelper.getRawContactIds(app.getActivity(),new String[]{contactId});
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(),rawIds);
+        List<String> systemLabelIds = GroupHelper.getSystemIds(app.getActivity());
+        String accountName = GroupHelper.getRawContactIdAccountName(app.getActivity(), rawIds[0]);
+        for (int i = 0; i < rawIds.length; i++) {
+            for (int j = 0; j < existingLabels.size(); j++) {
+                if (existingLabels.get(j).rawId.equals(rawIds[i]) && !systemLabelIds.contains(existingLabels.get(j).labelId)) {
+                    ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
+                            .withSelection(ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
+                                            + "' AND " + ContactsContract.Data.DATA1 + "='" + existingLabels.get(j).labelId
+                                            + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + "='" + rawIds[i] + "'",
+                                    null)
+                            .withYieldAllowed(i == rawIds.length - 1)
+                            .build());
+                }
+            }
+        }
+
+        if (!sourceIds.isEmpty()) {
+            for (int i = 0; i < sourceIds.size(); i++) {
+                HashMap<String, String> accNameLabelIdPair = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceIds.get(i));
+                for (int j = 0; j < rawIds.length; j++) {
+                    if (!systemLabelIds.contains(accNameLabelIdPair.get(accountName))) {
+                        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE)
+                                .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawIds[j])
+                                .withValue(ContactsContract.Data.DATA1, accNameLabelIdPair.get(accountName))
+                                .withYieldAllowed(i == sourceIds.size() - 1)
+                                .build());
+                    }
+                }
+            }
+        }
+
+        try {
+            ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            return e.getMessage();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+            return e.getMessage();
+        }
+        return QUsersCordova.SUCCESS;
+    }
+
+    /**
+     * Sets to contact given labels list.(if list is empty, then removes all labels from contact)
+     *
+     * @param contactId The contact id from which must be removed all labels.
+     * @param sourceIds List of sourceIds which labels wanted to be added.
+     * @return success message if succeed and exception message if failed
+     */
+    protected String setLabelListForContact(String contactId, List<String> sourceIds) {
+        String[] rawIds = GroupHelper.getRawContactIds(app.getActivity(),new String[]{contactId});
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(),rawIds);
+        List<String> systemLabelIds = GroupHelper.getSystemIds(app.getActivity());
+        String accountName = GroupHelper.getRawContactIdAccountName(app.getActivity(), rawIds[0]);
+        for (int i = 0; i < rawIds.length; i++) {
+            for (int j = 0; j < existingLabels.size(); j++) {
+                if (existingLabels.get(j).rawId.equals(rawIds[i]) && !systemLabelIds.contains(existingLabels.get(j).labelId)) {
+                    ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
+                            .withSelection(ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
+                                            + "' AND " + ContactsContract.Data.DATA1 + "='" + existingLabels.get(j).labelId
+                                            + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + "='" + rawIds[i] + "'",
+                                    null)
+                            .withYieldAllowed(i == rawIds.length - 1)
+                            .build());
+                }
+            }
+        }
+
+        if (!sourceIds.isEmpty()) {
+            for (int i = 0; i < sourceIds.size(); i++) {
+                HashMap<String, String> accNameLabelIdPair = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceIds.get(i));
+                for (int j = 0; j < rawIds.length; j++) {
+                    if (!systemLabelIds.contains(accNameLabelIdPair.get(accountName))) {
+                        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE)
+                                .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawIds[j])
+                                .withValue(ContactsContract.Data.DATA1, accNameLabelIdPair.get(accountName))
+                                .withYieldAllowed(i == sourceIds.size() - 1)
+                                .build());
+                    }
+                }
+            }
+        }
+
+        try {
+            ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            return e.getMessage();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+            return e.getMessage();
+        }
+        return QUsersCordova.SUCCESS;
+    }
+
 }
