@@ -72,6 +72,17 @@ public class QUsersCordova extends CordovaPlugin {
     }
 
     /**
+     * Requests 2 permissions at the same time.
+     *
+     * @param requestCode Request code
+     * @param first       First permission name
+     * @param second      Second permission name
+     */
+    private void getDoublePermission(int requestCode, String first, String second) {
+        PermissionHelper.requestPermissions(this, requestCode, new String[]{first, second});
+    }
+
+    /**
      * Executes the request and returns PluginResult.
      *
      * @param action          The action to execute.
@@ -109,17 +120,17 @@ public class QUsersCordova extends CordovaPlugin {
 
             return true;
         }else if(action.equals(GET_ONE_OR_MORE_LABELS_ACTION)){
-            if (PermissionHelper.hasPermission(this, READ)) {
+            if (PermissionHelper.hasPermission(this, READ) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                             getLabels(executeArgs);
                     }
                 });
             } else {
-                getReadPermission(LABELS_BY_SOURCE_ID_REQ_CODE);
+                getDoublePermission(LABELS_BY_SOURCE_ID_REQ_CODE, READ, ACCOUNTS);
             }
         } else if (action.equals(REMOVE_CONTACT_FROM_LABEL_ACTION)) {
-            if (PermissionHelper.hasPermission(this, WRITE)) {
+            if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         removeContactFromLabel(executeArgs);
@@ -130,46 +141,46 @@ public class QUsersCordova extends CordovaPlugin {
             }
             return true;
         } else if (action.equals(ADD_CONTACT_TO_LABEL_ACTION)) {
-            if (PermissionHelper.hasPermission(this, WRITE)) {
+            if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {                  
                             addContactToLabel(executeArgs);
                     }
                 });
             } else {
-                getWritePermission(ADD_CONTACT_TO_LABEL_REQ_CODE);
+                getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
             }
             return true;
         } else if (action.equals(REMOVE_LABEL_ACTION)) {
-            if (PermissionHelper.hasPermission(this, ACCOUNTS)) {
+            if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         removeLabelFromDatabase(executeArgs);
                     }
                 });
             } else {
-                getAccountPermission(REMOVE_LABEL_REQ_CODE);
+                getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
             }
             return true;
         } else if (action.equals(SAVE_NEW_LABEL_OR_EDIT)) {
-            if (PermissionHelper.hasPermission(this, ACCOUNTS)) {
+            if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         saveOrEditLabel(executeArgs);
                     }
                 });
             } else {
-                getAccountPermission(SAVE_NEW_LABEL_OR_EDIT_REQ_CODE);
+                getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
             }
         } else if (action.equals(SET_LABEL_LIST_FOR_CONTACT)) {
-            if (PermissionHelper.hasPermission(this, WRITE)) {
+            if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         setLabelListForContact(executeArgs);
                     }
                 });
             } else {
-                getWritePermission(SET_LABEL_LIST_FOR_CONTACT_REQ_CODE);
+                getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
             }
         }
         return false;
