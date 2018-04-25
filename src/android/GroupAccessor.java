@@ -13,10 +13,10 @@ import android.util.Log;
 
 import org.apache.cordova.CordovaInterface;
 
-import com.q.users.cordova.plugin.models.AccNameGroup;
-import com.q.users.cordova.plugin.models.QbixGroup;
-import com.q.users.cordova.plugin.models.RawIdLabelId;
-import com.q.users.cordova.plugin.utils.GroupHelper;
+import com.q.users.cordova.plugin.AccNameGroup;
+import com.q.users.cordova.plugin.QbixGroup;
+import com.q.users.cordova.plugin.RawIdLabelId;
+import com.q.users.cordova.plugin.GroupHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -89,14 +89,16 @@ public class GroupAccessor {
                 }
             }
             List<Integer> contactIds = GroupHelper.getContactIds(rawIdContactIdPair, rawIds);
-            if (!sourceIds.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)))) {
-                group.contactIds = contactIds;
-                sourceIds.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
-                labels.add(group);
-            } else {
-                int index = sourceIds.indexOf(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
-                labels.get(index).contactIds.addAll(contactIds);
-                Log.i("group_info_checker", "group: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)) + " is existing");
+            if (group.sourceId != null) {
+                if (!sourceIds.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)))) {
+                    group.contactIds = contactIds;
+                    sourceIds.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
+                    labels.add(group);
+                } else {
+                    int index = sourceIds.indexOf(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
+                    labels.get(index).contactIds.addAll(contactIds);
+                    Log.i("group_info_checker", "group: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)) + " is existing");
+                }
             }
 
         }
@@ -303,6 +305,73 @@ public class GroupAccessor {
         }
 
         return finalGroups;
+    }
+
+    /**
+     * Adds new label with given title on every account on device and syncs them all
+     *(for generating some autogenerating info).
+     *
+     * @param title Title of label wanted to be added.
+     * @return success message if succeed and exception message if failed
+     */
+    protected String addLabelToDatabase(String title) {
+        ArrayList<ContentProviderOperation> ops =
+                new ArrayList<>();
+        AccountManager accountManager = AccountManager.get(app.getActivity());
+        Account[] accounts = accountManager.getAccounts();
+        for (int i = 0; i < accounts.length; i++) {
+            ops.add(ContentProviderOperation.newInsert(ContactsContract.Groups.CONTENT_URI)
+                    .withValue(ContactsContract.Groups.TITLE, title)
+                    .withValue(ContactsContract.Groups.ACCOUNT_NAME, accounts[i].name)
+                    .withValue(ContactsContract.Groups.ACCOUNT_TYPE, accounts[i].type)
+                    .withYieldAllowed(true)
+                    .build()
+            );
+        }
+
+        try {
+            ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+            if (results.length >= 1) {
+                //Syncs accounts for generate SOURCE_ID, SYNC2, SYNC3
+                GroupHelper.requestSyncNow(app.getActivity());
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            return e.getMessage();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+            return e.getMessage();
+        }
+        return QUsersCordova.SUCCESS;
+    }
+
+    /**
+     * Changes existing labels title into given one.
+     *
+     * @param sourceId Existing label's sourceId which title wanted to be changed
+     * @param title New title
+     * @return success message if succeed and exception message if failed
+     */
+    protected String editLabelInDatabase(String sourceId, String title) {
+        ArrayList<ContentProviderOperation> ops =
+                new ArrayList<>();
+        ops.add(ContentProviderOperation.newUpdate(ContactsContract.Groups.CONTENT_URI)
+                .withSelection(ContactsContract.Groups.SOURCE_ID + "=?", new String[]{sourceId})
+                .withValue(ContactsContract.Groups.TITLE, title)
+                .withYieldAllowed(true)
+                .build()
+        );
+
+        try {
+            ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            return e.getMessage();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+            return e.getMessage();
+        }
+        return QUsersCordova.SUCCESS;
     }
 
 }

@@ -1,4 +1,4 @@
-package com.q.users.cordova.plugin.models;
+package com.q.users.cordova.plugin;
 
 import java.util.ArrayList;
 import java.util.List;

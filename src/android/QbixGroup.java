@@ -1,4 +1,4 @@
-package com.q.users.cordova.plugin.models;
+package com.q.users.cordova.plugin;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
