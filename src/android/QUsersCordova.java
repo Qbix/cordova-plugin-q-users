@@ -143,7 +143,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getWritePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE);
+                getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
             }
             return true;
         } else if (action.equals(ADD_CONTACT_TO_LABEL_ACTION)) {
@@ -154,7 +154,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
+                getDoublePermission(ADD_CONTACT_TO_LABEL_REQ_CODE, WRITE, ACCOUNTS);
             }
             return true;
         } else if (action.equals(REMOVE_LABEL_ACTION)) {
@@ -165,7 +165,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
+                getDoublePermission(REMOVE_LABEL_REQ_CODE, WRITE, ACCOUNTS);
             }
             return true;
         } else if (action.equals(SAVE_NEW_LABEL_OR_EDIT)) {
@@ -176,7 +176,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
+                getDoublePermission(SAVE_NEW_LABEL_OR_EDIT_REQ_CODE, WRITE, ACCOUNTS);
             }
         } else if (action.equals(SET_LABEL_LIST_FOR_CONTACT)) {
             if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
@@ -186,7 +186,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
+                getDoublePermission(SET_LABEL_LIST_FOR_CONTACT_REQ_CODE, WRITE, ACCOUNTS);
             }
         } else if (action.equals(GET_NATIVE_LABEL_FOR_CONTACT)) {
             if (PermissionHelper.hasPermission(this, READ) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
@@ -433,6 +433,13 @@ public class QUsersCordova extends CordovaPlugin {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                             removeContactFromLabel(executeArgs);
+                    }
+                });
+                break;
+            case ADD_CONTACT_TO_LABEL_REQ_CODE:
+                this.cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                        addContactToLabel(executeArgs);
                     }
                 });
                 break;
