@@ -429,4 +429,26 @@ public class GroupAccessor {
         return QUsersCordova.SUCCESS;
     }
 
+    /**
+     * Gets labels of given contact ids.
+     *
+     * @param contactIds Contacts' ids which labels wanted to be returned
+     * @param doUnion union by labelIds if true, otherwise intersection
+     * @return list of {@link QbixGroup} POJO
+     */
+    protected List<QbixGroup> getLabelsByContactIds(List<String> contactIds, boolean doUnion){
+        String[] contactIdArray = new String[contactIds.size()];
+        for (int i = 0; i < contactIds.size(); i++) {
+            contactIdArray[i] = contactIds.get(i);
+        }
+        String[] rawIds = GroupHelper.getRawContactIds(app.getActivity(), contactIdArray);
+        String[] sourceIds;
+        if (doUnion) {
+            sourceIds = GroupHelper.getUnionSourceIds(app.getActivity(), rawIds);
+        } else {
+            sourceIds = GroupHelper.getNotUnionSourceIds(app.getActivity(), rawIds);
+        }
+        List<QbixGroup> groupList = getLabelsBySourceId(sourceIds);
+        return groupList;
+    }
 }
