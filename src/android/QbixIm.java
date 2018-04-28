@@ -1,5 +1,7 @@
 package com.q.users.cordova.plugin;
 
+import org.json.JSONObject;
+
 public class QbixIm {
     /**
      * TYPES
@@ -28,4 +30,18 @@ public class QbixIm {
     String customType = null;
     String protocol;
     String customProtocol = null;
+
+    public JSONObject toJson() {
+        try {
+            JSONObject jsonIm = new JSONObject();
+            jsonIm.put("data", data);
+            jsonIm.put("type", type);
+            jsonIm.put("customType", customType);
+            jsonIm.put("protocol", protocol);
+            jsonIm.put("customProtocol", customProtocol);
+            return jsonIm;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

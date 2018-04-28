@@ -109,7 +109,7 @@ public class GroupAccessor {
     /**
      * Removes label from contacts.
      *
-     * @param sourceId    The source id which label wanted to be removed
+     * @param sourceId   The source id which label wanted to be removed
      * @param contactIds Array of contact ids from which label must be removed
      * @return success message if succeeded and exception message if failed
      */
@@ -125,11 +125,11 @@ public class GroupAccessor {
             String labelId = accNameLabelId.get(rawIdAccName.get(rawContactIds[i]));
             if (labelId != null) {
                 for (int j = 0; j < existingLabels.size(); j++) {
-                    if (existingLabels.get(j).rawId.equals(rawContactIds[i])&&existingLabels.get(j).labelId.equals(labelId)) {
+                    if (existingLabels.get(j).rawId.equals(rawContactIds[i]) && existingLabels.get(j).labelId.equals(labelId)) {
                         ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
                                 .withSelection(ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
                                                 + "' AND " + ContactsContract.Data.DATA1 + "='" + labelId
-                                                + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + "='"+rawContactIds[i],
+                                                + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + "='" + rawContactIds[i],
                                         null)
                                 .withYieldAllowed(i == rawContactIds.length - 1)
                                 .build());
@@ -173,7 +173,7 @@ public class GroupAccessor {
             boolean exists = false;
             if (labelId != null) {
                 for (int j = 0; j < existingLabels.size(); j++) {
-                    if(existingLabels.get(j).rawId.equals(rawContactIds[i])&&existingLabels.get(j).labelId.equals(labelId)){
+                    if (existingLabels.get(j).rawId.equals(rawContactIds[i]) && existingLabels.get(j).labelId.equals(labelId)) {
                         exists = true;
                     }
                 }
@@ -309,7 +309,7 @@ public class GroupAccessor {
 
     /**
      * Adds new label with given title on every account on device and syncs them all
-     *(for generating some autogenerating info).
+     * (for generating some autogenerating info).
      *
      * @param title Title of label wanted to be added.
      * @return success message if succeed and exception message if failed
@@ -349,7 +349,7 @@ public class GroupAccessor {
      * Changes existing labels title into given one.
      *
      * @param sourceId Existing label's sourceId which title wanted to be changed
-     * @param title New title
+     * @param title    New title
      * @return success message if succeed and exception message if failed
      */
     protected String editLabelInDatabase(String sourceId, String title) {
@@ -382,9 +382,9 @@ public class GroupAccessor {
      * @return success message if succeed and exception message if failed
      */
     protected String setLabelListForContact(String contactId, List<String> sourceIds) {
-        String[] rawIds = GroupHelper.getRawContactIds(app.getActivity(),new String[]{contactId});
+        String[] rawIds = GroupHelper.getRawContactIds(app.getActivity(), new String[]{contactId});
         ArrayList<ContentProviderOperation> ops = new ArrayList<>();
-        List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(),rawIds);
+        List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawIds);
         List<String> systemLabelIds = GroupHelper.getSystemIds(app.getActivity());
         String accountName = GroupHelper.getRawContactIdAccountName(app.getActivity(), rawIds[0]);
         for (int i = 0; i < rawIds.length; i++) {
@@ -433,10 +433,10 @@ public class GroupAccessor {
      * Gets labels of given contact ids.
      *
      * @param contactIds Contacts' ids which labels wanted to be returned
-     * @param doUnion union by labelIds if true, otherwise intersection
+     * @param doUnion    union by labelIds if true, otherwise intersection
      * @return list of {@link QbixGroup} POJO
      */
-    protected List<QbixGroup> getLabelsByContactIds(List<String> contactIds, boolean doUnion){
+    protected List<QbixGroup> getLabelsByContactIds(List<String> contactIds, boolean doUnion) {
         String[] contactIdArray = new String[contactIds.size()];
         for (int i = 0; i < contactIds.size(); i++) {
             contactIdArray[i] = contactIds.get(i);
@@ -450,5 +450,42 @@ public class GroupAccessor {
         }
         List<QbixGroup> groupList = getLabelsBySourceId(sourceIds);
         return groupList;
+    }
+
+    /**
+     * Gets all contact info for given contact ids.
+     *
+     * @param name smart name
+     *             (See description of names
+     *             {@link QUsersCordova#UNCATEGORIZED_SMART_NAME},
+     *             {@link QUsersCordova#BY_TIME_ADDED_SMART_NAME},
+     *             {@link QUsersCordova#BY_COMPANY_SMART_NAME},
+     *             {@link QUsersCordova#HAS_EMAIL_SMART_NAME},
+     *             {@link QUsersCordova#HAS_PHONE_SMART_NAME},
+     *             {@link QUsersCordova#HAS_PHOTO_SMART_NAME})
+     * @return list of {@link QbixContact} POJO
+     */
+    protected List<QbixContact> getContactList(String name) {
+        String[] contactIds = new String[0];
+        switch (name) {
+            case QUsersCordova.UNCATEGORIZED_SMART_NAME:
+                contactIds = GroupHelper.smartUncategorized(app.getActivity());
+                break;
+            case QUsersCordova.BY_TIME_ADDED_SMART_NAME:
+                break;
+            case QUsersCordova.BY_COMPANY_SMART_NAME:
+                break;
+            case QUsersCordova.HAS_EMAIL_SMART_NAME:
+                break;
+            case QUsersCordova.HAS_PHONE_SMART_NAME:
+                break;
+            case QUsersCordova.HAS_PHOTO_SMART_NAME:
+                break;
+        }
+        List<QbixContact> contactList = new ArrayList<>();
+        for (int i = 0; i < contactIds.length; i++) {
+            contactList.add(GroupHelper.getContact(app.getActivity(), contactIds[i]));
+        }
+        return contactList;
     }
 }

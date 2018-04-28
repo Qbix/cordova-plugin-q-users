@@ -7,10 +7,13 @@ import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.util.Base64;
 import android.util.Log;
 
 import com.q.users.cordova.plugin.RawIdLabelId;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -561,5 +564,206 @@ public class GroupHelper {
         }
         cursor.close();
         return accNames;
+    }
+
+    /**
+     * Gets all contact info for given contact id.
+     *
+     * @param context Context instance for db interactions
+     * @param contactId Contact id which info wanted to be returned
+     * @return list of {@link QbixContact} POJO
+     */
+    public static QbixContact getContact(Context context, String contactId) {
+        QbixContact contact = new QbixContact();
+        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
+                new String[]{
+                        ContactsContract.Data.RAW_CONTACT_ID,
+                        ContactsContract.Data.CONTACT_ID,
+                        ContactsContract.Data.MIMETYPE,
+                        ContactsContract.Data.DATA1,
+                        ContactsContract.Data.DATA2,
+                        ContactsContract.Data.DATA3,
+                        ContactsContract.Data.DATA4,
+                        ContactsContract.Data.DATA5,
+                        ContactsContract.Data.DATA6,
+                        ContactsContract.Data.DATA7,
+                        ContactsContract.Data.DATA8,
+                        ContactsContract.Data.DATA9,
+                        ContactsContract.Data.DATA10,
+                        ContactsContract.Data.DATA11,
+                        ContactsContract.Data.DATA14,
+                        ContactsContract.Data.DATA15
+                }, ContactsContract.Data.CONTACT_ID + "='"+contactId+"'",
+                null,
+                null);
+        while (cursor.moveToNext()) {
+            String mimeType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
+            switch (mimeType) {
+                case ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE:
+                    QbixEmail email = new QbixEmail();
+                    email.address = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                    email.type = cursor.getInt(cursor.getColumnIndex(ContactsContract.Data.DATA2));
+                    email.customType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
+                    contact.emails.add(email);
+                    break;
+                case ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE:
+                    QbixIm im = new QbixIm();
+                    im.data = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                    im.type = cursor.getInt(cursor.getColumnIndex(ContactsContract.Data.DATA2));
+                    im.customType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
+                    im.protocol = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA5));
+                    im.customProtocol = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA6));
+                    contact.ims.add(im);
+                    break;
+                case ContactsContract.CommonDataKinds.Nickname.CONTENT_ITEM_TYPE:
+                    contact.nickname = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                    break;
+                case ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE:
+                    QbixOrganization organization = new QbixOrganization();
+                    organization.company = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                    organization.type = cursor.getInt(cursor.getColumnIndex(ContactsContract.Data.DATA2));
+                    organization.customType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
+                    organization.title = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA4));
+                    organization.department = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA5));
+                    organization.jobDescription = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA6));
+                    organization.symbol = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA7));
+                    organization.phoneticName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA8));
+                    organization.officeLocation = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA9));
+                    organization.phoneticNameStyle = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA10));
+                    contact.organizations.add(organization);
+                    break;
+                case ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE:
+                    QbixPhone phone = new QbixPhone();
+                    phone.number = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                    phone.type = cursor.getInt(cursor.getColumnIndex(ContactsContract.Data.DATA2));
+                    phone.customType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
+                    contact.phones.add(phone);
+                    break;
+                case ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE:
+                    QbixName name = new QbixName();
+                    contact.displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                    name.displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                    name.givenName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA2));
+                    name.familyName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
+                    name.prefix = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA4));
+                    name.middleName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA5));
+                    name.suffix = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA6));
+                    name.phoneticGivenName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA7));
+                    name.phoneticMiddleName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA8));
+                    name.phoneticFamilyName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA9));
+                    contact.name = name;
+                    break;
+                case ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE:
+                    QbixAddress address = new QbixAddress();
+                    address.formattedAddress = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                    address.type = cursor.getInt(cursor.getColumnIndex(ContactsContract.Data.DATA2));
+                    address.customType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
+                    address.street = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA4));
+                    address.pobox = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA5));
+                    address.neighborhood = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA6));
+                    address.city = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA7));
+                    address.region = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA8));
+                    address.postcode = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA9));
+                    address.country = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA10));
+                    contact.addresses.add(address);
+                    break;
+                case ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE:
+                    QbixPhoto photo = new QbixPhoto();
+                    String photoFileIdString = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA14));
+                    try {
+                        photo.photoFileId = NumberFormat.getInstance().parse(photoFileIdString);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    byte[] photoByteArray = cursor.getBlob(cursor.getColumnIndex(ContactsContract.Data.DATA15));
+                    photo.photo = Base64.encodeToString(photoByteArray,Base64.DEFAULT);
+                    contact.photos.add(photo);
+                    break;
+                case ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE:
+                    contact.note = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                    break;
+                case ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE:
+                    QbixWebsite website = new QbixWebsite();
+                    website.url = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                    website.type = cursor.getInt(cursor.getColumnIndex(ContactsContract.Data.DATA2));
+                    website.customType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
+                    contact.websites.add(website);
+                    break;
+            }
+
+        }
+        cursor.close();
+        return contact;
+    }
+
+    /**
+     * Gets all contactIds, that have no labels attached to them.
+     *
+     * @param context Context instance for db interactions
+     * @return Array of contact Ids
+     */
+    public static String[] smartUncategorized(Context context){
+        List<String> allContactIds = new ArrayList<>();
+        List<String> systemIds = getSystemIds(context);
+        Cursor allContactCursor = context.getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
+                new String[]{
+                        ContactsContract.Contacts._ID
+                },
+                null,
+                null,
+                null);
+        while (allContactCursor.moveToNext()){
+            String contactId = allContactCursor.getString(allContactCursor.getColumnIndex(ContactsContract.Contacts._ID));
+            if(!allContactIds.contains(contactId)){
+                allContactIds.add(contactId);
+            }
+        }
+        allContactCursor.close();
+        List<String> uncategorizedContacts = new ArrayList<>();
+        for (int i = 0; i < allContactIds.size(); i++) {
+            List<String> currentContactLabels = new ArrayList<>();
+            Cursor dataCursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
+                    new String[]{
+                            ContactsContract.Data.DATA1
+                    },
+                    ContactsContract.Data.CONTACT_ID+"='"+allContactIds.get(i)
+                            +"' AND "+ContactsContract.Data.MIMETYPE+"='"+ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE+"'",
+                    null,
+                    null);
+            while (dataCursor.moveToNext()){
+                String labelId = dataCursor.getString(dataCursor.getColumnIndex(ContactsContract.Data.DATA1));
+                if(!currentContactLabels.contains(labelId)){
+                    currentContactLabels.add(labelId);
+                }
+            }
+            dataCursor.close();
+            String[] labelIdArray = new String[currentContactLabels.size()];
+            for (int j = 0; j < currentContactLabels.size(); j++) {
+                labelIdArray[j] = currentContactLabels.get(j);
+            }
+            List<String> finalList = new ArrayList<>();
+            Cursor groupCursor = context.getContentResolver().query(ContactsContract.Groups.CONTENT_URI,
+                    new String[]{
+                            ContactsContract.Groups._ID
+                    },
+                    ContactsContract.Groups._ID+getSuffix(labelIdArray.length),
+                    labelIdArray,
+                    null);
+            while (groupCursor.moveToNext()){
+                String labelId = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups._ID));
+                if(!systemIds.contains(labelId)){
+                    finalList.add(labelId);
+                }
+            }
+            groupCursor.close();
+            if(finalList.isEmpty()){
+                uncategorizedContacts.add(allContactIds.get(i));
+            }
+        }
+        String[] contactIdsArray = new String[uncategorizedContacts.size()];
+        for (int i = 0; i < contactIdsArray.length; i++) {
+            contactIdsArray[i] = uncategorizedContacts.get(i);
+        }
+        return contactIdsArray;
     }
 }
