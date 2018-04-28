@@ -766,4 +766,37 @@ public class GroupHelper {
         }
         return contactIdsArray;
     }
+
+    /**
+     * Gets all contactIds, that have organization or company field(s).
+     *
+     * @param context Context instance for db interactions
+     * @return Array of contact Ids
+     */
+    public static String[] smartByCompany(Context context) {
+        List<String> companyContacts = new ArrayList<>();
+        Cursor companyCursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
+                new String[]{
+                        ContactsContract.Data.CONTACT_ID,
+                        ContactsContract.Data.DATA1,
+                        ContactsContract.Data.DATA4
+                },
+                ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE + "'",
+                null,
+                null);
+        while (companyCursor.moveToNext()) {
+            String company = companyCursor.getString(companyCursor.getColumnIndex(ContactsContract.Data.DATA1));
+            String title = companyCursor.getString(companyCursor.getColumnIndex(ContactsContract.Data.DATA4));
+            String contactId = companyCursor.getString(companyCursor.getColumnIndex(ContactsContract.Data.CONTACT_ID));
+            if ((company != null && !company.equals("")) || (title != null && !title.equals(""))) {
+                companyContacts.add(contactId);
+            }
+        }
+        companyCursor.close();
+        String[] contactIdArray = new String[companyContacts.size()];
+        for (int i = 0; i < contactIdArray.length; i++) {
+            contactIdArray[i] = companyContacts.get(i);
+        }
+        return contactIdArray;
+    }
 }
