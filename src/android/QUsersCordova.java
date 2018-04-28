@@ -49,7 +49,7 @@ public class QUsersCordova extends CordovaPlugin {
 
     //smart names
     /**
-     * Get contacts which don’t belong to any group.
+     * Get contacts which dont belong to any group.
      */
     protected static final String UNCATEGORIZED_SMART_NAME = "uncategorized";
     /**

@@ -7,7 +7,7 @@ import java.sql.Blob;
 public class QbixPhoto {
 
     Number photoFileId;
-    Blob photo;
+    String photo;
 
     public JSONObject toJson() {
         try {
