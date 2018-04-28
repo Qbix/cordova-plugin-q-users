@@ -477,6 +477,7 @@ public class GroupAccessor {
                 contactIds = GroupHelper.smartByCompany(app.getActivity());
                 break;
             case QUsersCordova.HAS_EMAIL_SMART_NAME:
+                contactIds = GroupHelper.smartHasEmail(app.getActivity());
                 break;
             case QUsersCordova.HAS_PHONE_SMART_NAME:
                 break;
