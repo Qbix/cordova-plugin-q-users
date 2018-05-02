@@ -483,6 +483,7 @@ public class GroupAccessor {
                 contactIds = GroupHelper.smartHasPhone(app.getActivity());
                 break;
             case QUsersCordova.HAS_PHOTO_SMART_NAME:
+                contactIds = GroupHelper.smartHasPhoto(app.getActivity());
                 break;
         }
         List<QbixContact> contactList = new ArrayList<>();
