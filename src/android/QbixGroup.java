@@ -21,6 +21,7 @@ public class QbixGroup {
         try {
             JSONObject jsonGroup = new JSONObject();
             jsonGroup.put("sourceId", sourceId);
+            jsonGroup.put("title", title);
             jsonGroup.put("notes", notes);
             jsonGroup.put("summaryCount", summaryCount);
             jsonGroup.put("isVisible", isVisible);

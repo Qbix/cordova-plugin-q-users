@@ -10,8 +10,6 @@ import android.provider.ContactsContract;
 import android.util.Base64;
 import android.util.Log;
 
-import com.q.users.cordova.plugin.RawIdLabelId;
-
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -125,7 +123,7 @@ public class GroupHelper {
     /**
      * Gets all rawContactId's for given contactId array.
      *
-     * @param context Context instance for db interactions
+     * @param context    Context instance for db interactions
      * @param contactIds Array of contactIds which rawContactId's are needed
      * @return rawContactId array
      */
@@ -152,7 +150,7 @@ public class GroupHelper {
     /**
      * Gets all account names of for rawContactIds and set them into HashMap.
      *
-     * @param context Context instance for db interactions
+     * @param context       Context instance for db interactions
      * @param rawContactIds rawContactIds which account names wanted to be returned
      * @return HashMap that contains rawContactId and its account name
      * (key - raw contact id, value - account name)
@@ -178,7 +176,7 @@ public class GroupHelper {
     /**
      * Gets all label ids for sourceId and binds them to their account names.
      *
-     * @param context Context instance for db interactions
+     * @param context  Context instance for db interactions
      * @param sourceId sourceId which labelIds wanted to be returned
      * @return HashMap that contains rawContactId and its account name
      * (key - account name, value - label id)
@@ -205,7 +203,7 @@ public class GroupHelper {
     /**
      * Gets all existing labels for given rawContactIds.
      *
-     * @param context Context instance for db interactions
+     * @param context       Context instance for db interactions
      * @param rawContactIds Array of rawContactIds which labels wanted to be returned
      * @return HashMap that contains rawContactId and label id
      * (key - rawContactId, value - label id)
@@ -232,10 +230,10 @@ public class GroupHelper {
     }
 
     /**
-     * @param context Context instance for getting account manager
-     *
      * Forces the system to sync all accounts.(if you dont sync some deleted data can be shown to user
      * as before till system syncs automatically).
+     *
+     * @param context Context instance for getting account manager
      */
     public static void requestSyncNow(final Context context) {
         new Thread(new Runnable() {
@@ -270,7 +268,7 @@ public class GroupHelper {
     /**
      * Gets all rawContacts' ids which have labels with given sourceId.
      *
-     * @param context Context instance for db interactions
+     * @param context  Context instance for db interactions
      * @param sourceId SourceId of labels which rawContacts' ids must be returned
      * @return List of rawContactIds
      */
@@ -372,7 +370,7 @@ public class GroupHelper {
      * (See {@link GroupAccessor#getLabelsByContactIds(List, boolean)} method description)
      *
      * @param context Context instance for db interactions
-     * @param rawIds Raw Contact Ids of contacts which label sourceIds wanted to be returned
+     * @param rawIds  Raw Contact Ids of contacts which label sourceIds wanted to be returned
      * @return List of sourceIds
      */
     public static String[] getUnionSourceIds(Context context, String[] rawIds) {
@@ -385,7 +383,7 @@ public class GroupHelper {
      * Gets all unique label ids that belongs to given rawIds.
      *
      * @param context Context instance for db interactions
-     * @param rawIds Raw Contact Ids which unique labels wanted to be returned
+     * @param rawIds  Raw Contact Ids which unique labels wanted to be returned
      * @return Array of unique label ids
      */
     public static String[] getUniqueLabelIdsForRawIds(Context context, String[] rawIds) {
@@ -401,7 +399,7 @@ public class GroupHelper {
                 null);
         while (cursor.moveToNext()) {
             String labelId = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
-            if (labelId != null && !labelIdList.contains(labelId)&&!systemIds.contains(labelId)) {
+            if (labelId != null && !labelIdList.contains(labelId) && !systemIds.contains(labelId)) {
                 labelIdList.add(labelId);
             }
         }
@@ -416,22 +414,22 @@ public class GroupHelper {
     /**
      * Gets all source Ids of given labelId list.
      *
-     * @param context Context instance for db interactions
+     * @param context  Context instance for db interactions
      * @param labelIds Label Ids which source ids wanted to be returned
      * @return Array of source ids
      */
-    public static String[] getSourceIdsForLabelIds(Context context, String[] labelIds){
+    public static String[] getSourceIdsForLabelIds(Context context, String[] labelIds) {
         List<String> sourceIdList = new ArrayList<>();
         Cursor cursor = context.getContentResolver().query(ContactsContract.Groups.CONTENT_URI,
                 new String[]{
                         ContactsContract.Groups.SOURCE_ID
                 },
-                ContactsContract.Groups._ID+ getSuffix(labelIds.length),
+                ContactsContract.Groups._ID + getSuffix(labelIds.length),
                 labelIds,
                 null);
         while (cursor.moveToNext()){
             String sourceId = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID));
-            if(sourceId!=null&&!sourceIdList.contains(sourceId)){
+            if(sourceId !=null && !sourceIdList.contains(sourceId)){
                 sourceIdList.add(sourceId);
             }
         }
@@ -448,7 +446,7 @@ public class GroupHelper {
      * (See {@link GroupAccessor#getLabelsByContactIds(List, boolean)} method description)
      *
      * @param context Context instance for db interactions
-     * @param rawIds Raw Contact Ids of contacts which label sourceIds wanted to be returned
+     * @param rawIds  Raw Contact Ids of contacts which label sourceIds wanted to be returned
      * @return Array of sourceIds which labels have all given rawContactIds
      */
     public static String[] getNotUnionSourceIds(Context context, String[] rawIds) {
@@ -543,7 +541,7 @@ public class GroupHelper {
      * Gets all unique Account Names for given rawContactIds.
      *
      * @param context Context instance for db interactions
-     * @param rawIds Raw Contact Ids which account names wanted to be returned
+     * @param rawIds  Raw Contact Ids which account names wanted to be returned
      * @return List of unique account names
      */
     public static List<String> getAccountNamesForRawIds(Context context, String[] rawIds) {
@@ -569,7 +567,7 @@ public class GroupHelper {
     /**
      * Gets all contact info for given contact id.
      *
-     * @param context Context instance for db interactions
+     * @param context   Context instance for db interactions
      * @param contactId Contact id which info wanted to be returned
      * @return list of {@link QbixContact} POJO
      */
@@ -593,7 +591,7 @@ public class GroupHelper {
                         ContactsContract.Data.DATA11,
                         ContactsContract.Data.DATA14,
                         ContactsContract.Data.DATA15
-                }, ContactsContract.Data.CONTACT_ID + "='"+contactId+"'",
+                }, ContactsContract.Data.CONTACT_ID + "='" + contactId + "'",
                 null,
                 null);
         while (cursor.moveToNext()) {
@@ -676,7 +674,7 @@ public class GroupHelper {
                         e.printStackTrace();
                     }
                     byte[] photoByteArray = cursor.getBlob(cursor.getColumnIndex(ContactsContract.Data.DATA15));
-                    photo.photo = Base64.encodeToString(photoByteArray,Base64.DEFAULT);
+                    photo.photo = Base64.encodeToString(photoByteArray, Base64.DEFAULT);
                     contact.photos.add(photo);
                     break;
                 case ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE:
@@ -702,7 +700,7 @@ public class GroupHelper {
      * @param context Context instance for db interactions
      * @return Array of contact Ids
      */
-    public static String[] smartUncategorized(Context context){
+    public static String[] smartUncategorized(Context context) {
         List<String> allContactIds = new ArrayList<>();
         List<String> systemIds = getSystemIds(context);
         Cursor allContactCursor = context.getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
@@ -712,9 +710,9 @@ public class GroupHelper {
                 null,
                 null,
                 null);
-        while (allContactCursor.moveToNext()){
+        while (allContactCursor.moveToNext()) {
             String contactId = allContactCursor.getString(allContactCursor.getColumnIndex(ContactsContract.Contacts._ID));
-            if(!allContactIds.contains(contactId)){
+            if (!allContactIds.contains(contactId)){
                 allContactIds.add(contactId);
             }
         }
@@ -727,10 +725,10 @@ public class GroupHelper {
                             ContactsContract.Data.DATA1
                     },
                     ContactsContract.Data.CONTACT_ID+"='"+allContactIds.get(i)
-                            +"' AND "+ContactsContract.Data.MIMETYPE+"='"+ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE+"'",
+                            +"' AND " + ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE + "'",
                     null,
                     null);
-            while (dataCursor.moveToNext()){
+            while (dataCursor.moveToNext()) {
                 String labelId = dataCursor.getString(dataCursor.getColumnIndex(ContactsContract.Data.DATA1));
                 if(!currentContactLabels.contains(labelId)){
                     currentContactLabels.add(labelId);
@@ -746,7 +744,7 @@ public class GroupHelper {
                     new String[]{
                             ContactsContract.Groups._ID
                     },
-                    ContactsContract.Groups._ID+getSuffix(labelIdArray.length),
+                    ContactsContract.Groups._ID + getSuffix(labelIdArray.length),
                     labelIdArray,
                     null);
             while (groupCursor.moveToNext()){
@@ -879,6 +877,33 @@ public class GroupHelper {
         String[] contactIdArray = new String[photoContacts.size()];
         for (int i = 0; i < contactIdArray.length; i++) {
             contactIdArray[i] = photoContacts.get(i);
+        }
+        return contactIdArray;
+    }
+
+    /**
+     * Gets all contactIds sorted by last time updated.
+     *
+     * @param context Context instance for db interactions
+     * @return Array of contact Ids
+     */
+    public static String[] smartByTimeUpdated(Context context) {
+        List<String> byTimeContacts = new ArrayList<>();
+        Cursor timeCursor = context.getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
+                new String[]{
+
+                },
+                null,
+                null,
+                ContactsContract.Contacts.CONTACT_LAST_UPDATED_TIMESTAMP + " ASC");
+        while (timeCursor.moveToNext()) {
+            String contactId = timeCursor.getString(timeCursor.getColumnIndex(ContactsContract.Contacts._ID));
+            byTimeContacts.add(contactId);
+        }
+        timeCursor.close();
+        String[] contactIdArray = new String[byTimeContacts.size()];
+        for (int i = 0; i < contactIdArray.length; i++) {
+            contactIdArray[i] = byTimeContacts.get(i);
         }
         return contactIdArray;
     }

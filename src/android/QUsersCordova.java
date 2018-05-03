@@ -1,23 +1,19 @@
 package com.q.users.cordova.plugin;
 
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaActivity;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.LOG;
-import org.apache.cordova.PermissionHelper;
-import org.apache.cordova.PluginResult;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
-import com.q.users.cordova.plugin.QbixGroup;
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PermissionHelper;
+import org.apache.cordova.PluginResult;
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.List;
+
 
 public class QUsersCordova extends CordovaPlugin {
 
@@ -53,9 +49,9 @@ public class QUsersCordova extends CordovaPlugin {
      */
     protected static final String UNCATEGORIZED_SMART_NAME = "uncategorized";
     /**
-     * Get contacts sorted by time added.
+     * Get contacts sorted by last time updated.
      */
-    protected static final String BY_TIME_ADDED_SMART_NAME = "byTimeAdded";
+    protected static final String BY_LAST_TIME_UPDATED_SMART_NAME = "byTimeAdded";
     /**
      * Get contacts that have filled the "Company" or "Organization" field
      */
@@ -163,6 +159,8 @@ public class QUsersCordova extends CordovaPlugin {
             } else {
                 getDoublePermission(LABELS_BY_SOURCE_ID_REQ_CODE, READ, ACCOUNTS);
             }
+
+            return true;
         } else if (action.equals(REMOVE_CONTACT_FROM_LABEL_ACTION)) {
             if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
@@ -173,6 +171,7 @@ public class QUsersCordova extends CordovaPlugin {
             } else {
                 getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
             }
+
             return true;
         } else if (action.equals(ADD_CONTACT_TO_LABEL_ACTION)) {
             if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
@@ -184,6 +183,7 @@ public class QUsersCordova extends CordovaPlugin {
             } else {
                 getDoublePermission(ADD_CONTACT_TO_LABEL_REQ_CODE, WRITE, ACCOUNTS);
             }
+
             return true;
         } else if (action.equals(REMOVE_LABEL_ACTION)) {
             if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
@@ -195,6 +195,7 @@ public class QUsersCordova extends CordovaPlugin {
             } else {
                 getDoublePermission(REMOVE_LABEL_REQ_CODE, WRITE, ACCOUNTS);
             }
+
             return true;
         } else if (action.equals(SAVE_NEW_LABEL_OR_EDIT)) {
             if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
@@ -206,6 +207,8 @@ public class QUsersCordova extends CordovaPlugin {
             } else {
                 getDoublePermission(SAVE_NEW_LABEL_OR_EDIT_REQ_CODE, WRITE, ACCOUNTS);
             }
+
+            return true;
         } else if (action.equals(SET_LABEL_LIST_FOR_CONTACT)) {
             if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
@@ -216,6 +219,8 @@ public class QUsersCordova extends CordovaPlugin {
             } else {
                 getDoublePermission(SET_LABEL_LIST_FOR_CONTACT_REQ_CODE, WRITE, ACCOUNTS);
             }
+
+            return true;
         } else if (action.equals(GET_NATIVE_LABEL_FOR_CONTACT)) {
             if (PermissionHelper.hasPermission(this, READ) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
@@ -226,6 +231,8 @@ public class QUsersCordova extends CordovaPlugin {
             } else {
                 getDoublePermission(GET_NATIVE_LABEL_FOR_CONTACT_REQ_CODE, READ, ACCOUNTS);
             }
+
+            return true;
         } else if (action.equals(SMART)) {
             if (PermissionHelper.hasPermission(this, READ) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
@@ -236,6 +243,8 @@ public class QUsersCordova extends CordovaPlugin {
             } else {
                 getDoublePermission(SMART_REQ_CODE, READ, ACCOUNTS);
             }
+
+            return true;
         }
         return false;
     }
@@ -264,15 +273,10 @@ public class QUsersCordova extends CordovaPlugin {
      */
     private void getLabels(JSONArray args) {
         try {
-            List<String> sourceIdList = new ArrayList<>();
-            for (int i = 0; i < args.length(); i++) {
-                JSONObject sourceIdJson = args.getJSONObject(i);
-                String sourceId = sourceIdJson.getString("labelId");
-                sourceIdList.add(sourceId);
-            }
-            String[] sourceIdArray = new String[sourceIdList.size()];
-            for (int i = 0; i < sourceIdList.size(); i++) {
-                sourceIdArray[i] = sourceIdList.get(i);
+            JSONArray labelIdArray = args.getJSONArray(0);
+            String[] sourceIdArray = new String[labelIdArray.length()];
+            for (int i = 0; i < labelIdArray.length(); i++) {
+               sourceIdArray[i] = labelIdArray.getString(i);
             }
             List<QbixGroup> labels = groupAccessor.getLabelsBySourceId(sourceIdArray);
             JSONArray jsonGroups = new JSONArray();
@@ -297,13 +301,11 @@ public class QUsersCordova extends CordovaPlugin {
      */
     private void removeContactFromLabel(JSONArray args) {
         try {
-            final JSONObject filter = args.getJSONObject(0);
-            final String labelId = filter.getString("labelId");
-            final JSONArray contactIds = filter.getJSONArray("contactIds");
+            String labelId = args.getString(0);
+            JSONArray contactIds = args.getJSONArray(1);
             String[] idArray = new String[contactIds.length()];
             for (int i = 0; i < contactIds.length(); i++) {
-                JSONObject row = contactIds.getJSONObject(i);
-                idArray[i] = row.getString("contactId");
+                idArray[i] = contactIds.getString(i);
             }
             String removeMessage = groupAccessor.removeLabelFromContacts(labelId, idArray);
             if (removeMessage.equals(SUCCESS)) {
@@ -323,13 +325,11 @@ public class QUsersCordova extends CordovaPlugin {
      */
     private void addContactToLabel(JSONArray args) {
         try {
-            final JSONObject filter = args.getJSONObject(0);
-            final String labelId = filter.getString("labelId");
-            final JSONArray contactIds = filter.getJSONArray("contactIds");
+            String labelId = args.getString(0);
+            JSONArray contactIds = args.getJSONArray(1);
             String[] idArray = new String[contactIds.length()];
             for (int i = 0; i < contactIds.length(); i++) {
-                JSONObject row = contactIds.getJSONObject(i);
-                idArray[i] = row.getString("contactId");
+                idArray[i] = contactIds.getString(i);
             }
             String addMessage = groupAccessor.addLabelToContacts(labelId, idArray);
             if (addMessage.equals(SUCCESS)) {
@@ -351,8 +351,7 @@ public class QUsersCordova extends CordovaPlugin {
      */
     private void removeLabelFromDatabase(JSONArray args) {
         try {
-            final JSONObject filter = args.getJSONObject(0);
-            final String sourceId = filter.getString("labelId");
+            String sourceId = args.getString(0);
             String removeMessage = groupAccessor.removeLabelFromData(sourceId);
             if (removeMessage.equals(SUCCESS)) {
                 callbackContext.success();
@@ -455,7 +454,7 @@ public class QUsersCordova extends CordovaPlugin {
      * Gets and sorts contacts depending on "smart name" which defined in args param.
      * (See description of names
      * {@link QUsersCordova#UNCATEGORIZED_SMART_NAME},
-     * {@link QUsersCordova#BY_TIME_ADDED_SMART_NAME},
+     * {@link QUsersCordova#BY_LAST_TIME_UPDATED_SMART_NAME},
      * {@link QUsersCordova#BY_COMPANY_SMART_NAME},
      * {@link QUsersCordova#HAS_EMAIL_SMART_NAME},
      * {@link QUsersCordova#HAS_PHONE_SMART_NAME},

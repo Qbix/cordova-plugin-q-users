@@ -129,7 +129,7 @@ public class GroupAccessor {
                         ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
                                 .withSelection(ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
                                                 + "' AND " + ContactsContract.Data.DATA1 + "='" + labelId
-                                                + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + "='" + rawContactIds[i],
+                                                + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + "='" + rawContactIds[i] + "'",
                                         null)
                                 .withYieldAllowed(i == rawContactIds.length - 1)
                                 .build());
@@ -458,7 +458,7 @@ public class GroupAccessor {
      * @param name smart name
      *             (See description of names
      *             {@link QUsersCordova#UNCATEGORIZED_SMART_NAME},
-     *             {@link QUsersCordova#BY_TIME_ADDED_SMART_NAME},
+     *             {@link QUsersCordova#BY_LAST_TIME_UPDATED_SMART_NAME},
      *             {@link QUsersCordova#BY_COMPANY_SMART_NAME},
      *             {@link QUsersCordova#HAS_EMAIL_SMART_NAME},
      *             {@link QUsersCordova#HAS_PHONE_SMART_NAME},
@@ -471,7 +471,8 @@ public class GroupAccessor {
             case QUsersCordova.UNCATEGORIZED_SMART_NAME:
                 contactIds = GroupHelper.smartUncategorized(app.getActivity());
                 break;
-            case QUsersCordova.BY_TIME_ADDED_SMART_NAME:
+            case QUsersCordova.BY_LAST_TIME_UPDATED_SMART_NAME:
+                contactIds = GroupHelper.smartByTimeUpdated(app.getActivity());
                 break;
             case QUsersCordova.BY_COMPANY_SMART_NAME:
                 contactIds = GroupHelper.smartByCompany(app.getActivity());

@@ -66,7 +66,7 @@ public class QbixContact {
             for (int i = 0; i < emails.size(); i++) {
                 jsonEmails.put(emails.get(i).toJson());
             }
-            jsonContact.put("emails", emails);
+            jsonContact.put("emails", jsonEmails);
 
             JSONArray jsonIms = new JSONArray();
             for (int i = 0; i < ims.size(); i++) {
@@ -81,7 +81,7 @@ public class QbixContact {
             jsonContact.put("websites", jsonWebsites);
 
             JSONArray jsonPhotos = new JSONArray();
-            for (int i = 0; i < phones.size(); i++) {
+            for (int i = 0; i < photos.size(); i++) {
                 jsonPhotos.put(photos.get(i).toJson());
             }
             jsonContact.put("photos", jsonPhotos);
