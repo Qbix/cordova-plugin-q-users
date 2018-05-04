@@ -10,9 +10,12 @@ import android.provider.ContactsContract;
 import android.util.Base64;
 import android.util.Log;
 
+import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
