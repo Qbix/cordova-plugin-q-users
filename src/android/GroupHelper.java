@@ -687,6 +687,19 @@ public class GroupHelper {
                     website.customType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
                     contact.websites.add(website);
                     break;
+                case ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE:
+                    if (cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA2)).equals("3")) {     //3 for birthday type
+                        String birthday = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                        DateFormat formatter;
+                        formatter = new SimpleDateFormat("yyyy-MM-dd");
+                        try {
+                            Date date = formatter.parse(birthday);
+                            contact.birthday = String.valueOf(date.getTime());
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
             }
 
         }
