@@ -1,5 +1,7 @@
 package com.q.users.cordova.plugin;
 
+import org.json.JSONObject;
+
 public class QbixWebsite {
     /**
      * TYPES
@@ -17,4 +19,16 @@ public class QbixWebsite {
     String url;
     int type;
     String customType;
+
+    public JSONObject toJson() {
+        try {
+            JSONObject jsonWebsite = new JSONObject();
+            jsonWebsite.put("url", url);
+            jsonWebsite.put("type", type);
+            jsonWebsite.put("customType", customType);
+            return jsonWebsite;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

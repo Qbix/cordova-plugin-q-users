@@ -1,5 +1,7 @@
 package com.q.users.cordova.plugin;
 
+import org.json.JSONObject;
+
 public class QbixPhone {
     /**
      * TYPES
@@ -30,4 +32,16 @@ public class QbixPhone {
     String number;
     int type;
     String customType;
+
+    public JSONObject toJson() {
+        try {
+            JSONObject jsonNumber = new JSONObject();
+            jsonNumber.put("number", number);
+            jsonNumber.put("type", type);
+            jsonNumber.put("customType", customType);
+            return jsonNumber;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }
