@@ -487,6 +487,6 @@ public class GroupAccessor {
                 contactIds = GroupHelper.smartHasPhoto(app.getActivity());
                 break;
         }
-        return contactIds
+        return contactIds;
     }
 }
