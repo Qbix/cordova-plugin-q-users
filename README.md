@@ -97,14 +97,14 @@ Gets labels by given `sourceId`'s. Returns JSON array of `QbixGroup` object. Pro
 
 __Example__:
 ```js
-var getLabels = Q.Users.Cordova.Labels.getAll(["74d148cb8cbc7d41","6982bdf4897c3c6f","e"],function(data){console.log(data);}, function(err){console.log(err)})
+var getLabels = Q.Users.Cordova.Labels.get(["74d148cb8cbc7d41","6982bdf4897c3c6f","e"],function(data){console.log(data);}, function(err){console.log(err)})
 ```
 
 ## forContacts
 Gets labels for specific contact(s). Returns JSON array of `QbixGroup` object. Property names are the keys.
 
 ### Parameters
-- __contactIds__: `contactId`s of contacts which labels wanted to be returned. [JSON array of Strings]
+- __contactIds__: `contactId`s of contacts which labels wanted to be returned. [JSON array of ints]
 - __doUnion__: If `true` gets only those labeles which are bound to every single given contact (System related ones are not count). If `false` gets all labels that are bound to at least one given contact. [boolean]
 
 ### Supporded platforms
@@ -112,7 +112,7 @@ Gets labels for specific contact(s). Returns JSON array of `QbixGroup` object. P
 
 __Example__:
 ```js
-var unionLabels = Q.Users.Cordova.Labels.forContacts(["5","12","56"],true,function(data){console.log(data);}, function(err){console.log(err)})
+var unionLabels = Q.Users.Cordova.Labels.forContacts([5,12,56],true,function(data){console.log(data);}, function(err){console.log(err)})
 ```
 
 ## save
@@ -153,14 +153,14 @@ Add existing label to given contact(s).
 
 ### Parameters
 - __sourceId__: The `sourceId` of the label wanted to be added. [String]
-- __contactIds__: List of `contactId`s to which label wants to be added. [JSON array of Strings]
+- __contactIds__: List of `contactId`s to which label wants to be added. [JSON array of ints]
 
 ### Supporded platforms
 - __Android__
 
 __Example__:
 ```js
-Q.Users.Cordova.Labels.addContact(["54ed2c5e8de2b47c", ["5","12","25"]],function(data){console.log(data);}, function(err){console.log(err)})
+Q.Users.Cordova.Labels.addContact(["54ed2c5e8de2b47c", [5,12,25]],function(data){console.log(data);}, function(err){console.log(err)})
 ```
 
 ## removeContact
@@ -168,21 +168,21 @@ Removes label from given contact(s).
 
 ### Parameters
 - __sourceId__: The `sourceId` of the label wanted to be removed. [String]
-- __contactIds__: List of `contactId`s from which label wants to be removed. [JSON array of Strings]
+- __contactIds__: List of `contactId`s from which label wants to be removed. [JSON array of ints]
 
 ### Supporded platforms
 - __Android__
 
 __Example__:
 ```js
-Q.Users.Cordova.Labels.removeContact(["54ed2c5e8de2b47c", ["5","12","25"]],function(data){console.log(data);}, function(err){console.log(err)})
+Q.Users.Cordova.Labels.removeContact(["54ed2c5e8de2b47c", [5,12,25]],function(data){console.log(data);}, function(err){console.log(err)})
 ```
 
 ## setForContact
 Sets all the labels for the contact. This can be used to add or remove labels since the list of `sourceId`s is supposed to be the total set of labels for the contact, eg [ ] removes all labels.
 
 ### Parameters
-- __contactId__: The `contactId` of contact to which the label list wanted to be set. [String]
+- __contactId__: The `contactId` of contact to which the label list wanted to be set. [int]
 - __sourceIds__: The `sourceId`s wanted to be set to contact. (Can be empty which means to remove all non-system-related labels from contact)
 
 ### Supporded platforms
@@ -190,7 +190,7 @@ Sets all the labels for the contact. This can be used to add or remove labels si
 
 __Example__:
 ```js
-Q.Users.Cordova.Labels.setForContact(["5",["54ed2c5e8de2b47c", "130e58e00af1beec"]],function(data){console.log(data);}, function(err){console.log(err)})
+Q.Users.Cordova.Labels.setForContact([5,["54ed2c5e8de2b47c", "130e58e00af1beec"]],function(data){console.log(data);}, function(err){console.log(err)})
 ```
 
 ## smart
