@@ -20,9 +20,9 @@ public class QbixGroup {
     public JSONObject toJson() {
         try {
             JSONObject jsonGroup = new JSONObject();
-            jsonGroup.put("sourceId", sourceId);
-            jsonGroup.put("title", title);
-            jsonGroup.put("notes", notes);
+            jsonGroup.put("sourceId", sourceId!=null ? sourceId: "");
+            jsonGroup.put("title", title!=null ? title: "");
+            jsonGroup.put("notes", notes!=null ? notes: "");
             jsonGroup.put("summaryCount", summaryCount);
             jsonGroup.put("isVisible", isVisible);
             jsonGroup.put("isDeleted", isDeleted);

@@ -453,7 +453,7 @@ public class GroupAccessor {
     }
 
     /**
-     * Gets all contact info for given contact ids.
+     * Gets contact ids depending on given smart name.
      *
      * @param name smart name
      *             (See description of names
@@ -463,9 +463,9 @@ public class GroupAccessor {
      *             {@link QUsersCordova#HAS_EMAIL_SMART_NAME},
      *             {@link QUsersCordova#HAS_PHONE_SMART_NAME},
      *             {@link QUsersCordova#HAS_PHOTO_SMART_NAME})
-     * @return list of {@link QbixContact} POJO
+     * @return Array of contact ids
      */
-    protected List<QbixContact> getContactList(String name) {
+    protected String[] getContactList(String name) {
         String[] contactIds = new String[0];
         switch (name) {
             case QUsersCordova.UNCATEGORIZED_SMART_NAME:
@@ -487,10 +487,6 @@ public class GroupAccessor {
                 contactIds = GroupHelper.smartHasPhoto(app.getActivity());
                 break;
         }
-        List<QbixContact> contactList = new ArrayList<>();
-        for (int i = 0; i < contactIds.length; i++) {
-            contactList.add(GroupHelper.getContact(app.getActivity(), contactIds[i]));
-        }
-        return contactList;
+        return contactIds;
     }
 }

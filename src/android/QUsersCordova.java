@@ -451,7 +451,7 @@ public class QUsersCordova extends CordovaPlugin {
     }
 
     /**
-     * Gets and sorts contacts depending on "smart name" which defined in args param.
+     * Gets and sorts contactIds depending on "smart name" which defined in args param.
      * (See description of names
      * {@link QUsersCordova#UNCATEGORIZED_SMART_NAME},
      * {@link QUsersCordova#BY_LAST_TIME_UPDATED_SMART_NAME},
@@ -465,12 +465,11 @@ public class QUsersCordova extends CordovaPlugin {
     private void smart(JSONArray args) {
         try {
             String name = args.getString(0);
-            List<QbixContact> contacts = groupAccessor.getContactList(name);
+            String[] contacts = groupAccessor.getContactList(name);
             if (contacts != null) {
                 JSONArray jsonContacts = new JSONArray();
-                for (QbixContact contact :
-                        contacts) {
-                    jsonContacts.put(contact.toJson());
+                for (int i = 0; i < contacts.length; i++) {
+                    jsonContacts.put(contacts[i]);
                 }
                 callbackContext.success(jsonContacts);
             } else {
