@@ -102,6 +102,8 @@ public class GroupHelper {
         if (count == 1) {
             //checks if there is 1 argument
             selectionSuffix += "?)";
+        } else if (count == 0) {
+            return "";
         } else {
             for (int i = 0; i < count; i++) {
                 if (i == 0) {
@@ -157,19 +159,21 @@ public class GroupHelper {
      */
     public static HashMap<String, String> getRawContactIdAccountNamePair(Context context, String[] rawContactIds) {
         HashMap<String, String> map = new HashMap<>();
-        Cursor cursor = context.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
-                new String[]{
-                        ContactsContract.RawContacts._ID,
-                        ContactsContract.RawContacts.ACCOUNT_NAME
-                },
-                ContactsContract.RawContacts._ID + GroupHelper.getSuffix(rawContactIds.length),
-                rawContactIds,
-                null);
-        while (cursor.moveToNext()) {
-            map.put(cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts._ID)),
-                    cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME)));
+        if (rawContactIds.length != 0) {
+            Cursor cursor = context.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
+                    new String[]{
+                            ContactsContract.RawContacts._ID,
+                            ContactsContract.RawContacts.ACCOUNT_NAME
+                    },
+                    ContactsContract.RawContacts._ID + GroupHelper.getSuffix(rawContactIds.length),
+                    rawContactIds,
+                    null);
+            while (cursor.moveToNext()) {
+                map.put(cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts._ID)),
+                        cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME)));
+            }
+            cursor.close();
         }
-        cursor.close();
         return map;
     }
 
@@ -210,22 +214,24 @@ public class GroupHelper {
      */
     public static List<RawIdLabelId> getExistingRawIdLabelIdPairs(Context context, String[] rawContactIds) {
         List<RawIdLabelId> list = new ArrayList<>();
-        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
-                new String[]{
-                        ContactsContract.Data.MIMETYPE,
-                        ContactsContract.Data.RAW_CONTACT_ID,
-                        ContactsContract.Data.DATA1
-                },
-                ContactsContract.Data.MIMETYPE + "='" +
-                        ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE +
-                        "' AND " + ContactsContract.Data.RAW_CONTACT_ID + GroupHelper.getSuffix(rawContactIds.length),
-                rawContactIds,
-                null);
-        while (cursor.moveToNext()) {
-            list.add(new RawIdLabelId(cursor.getString(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID)),
-                    cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1))));
+        if (rawContactIds.length != 0) {
+            Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
+                    new String[]{
+                            ContactsContract.Data.MIMETYPE,
+                            ContactsContract.Data.RAW_CONTACT_ID,
+                            ContactsContract.Data.DATA1
+                    },
+                    ContactsContract.Data.MIMETYPE + "='" +
+                            ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE +
+                            "' AND " + ContactsContract.Data.RAW_CONTACT_ID + GroupHelper.getSuffix(rawContactIds.length),
+                    rawContactIds,
+                    null);
+            while (cursor.moveToNext()) {
+                list.add(new RawIdLabelId(cursor.getString(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID)),
+                        cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1))));
+            }
+            cursor.close();
         }
-        cursor.close();
         return list;
     }
 
@@ -389,21 +395,23 @@ public class GroupHelper {
     public static String[] getUniqueLabelIdsForRawIds(Context context, String[] rawIds) {
         List<String> labelIdList = new ArrayList<>();
         List<String> systemIds = getSystemIds(context);
-        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
-                new String[]{
-                        ContactsContract.Data.DATA1
-                },
-                ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
-                        + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + getSuffix(rawIds.length),
-                rawIds,
-                null);
-        while (cursor.moveToNext()) {
-            String labelId = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
-            if (labelId != null && !labelIdList.contains(labelId) && !systemIds.contains(labelId)) {
-                labelIdList.add(labelId);
+        if (rawIds.length != 0) {
+            Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
+                    new String[]{
+                            ContactsContract.Data.DATA1
+                    },
+                    ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
+                            + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + getSuffix(rawIds.length),
+                    rawIds,
+                    null);
+            while (cursor.moveToNext()) {
+                String labelId = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+                if (labelId != null && !labelIdList.contains(labelId) && !systemIds.contains(labelId)) {
+                    labelIdList.add(labelId);
+                }
             }
+            cursor.close();
         }
-        cursor.close();
         String[] labelIdArray = new String[labelIdList.size()];
         for (int i = 0; i < labelIdArray.length; i++) {
             labelIdArray[i] = labelIdList.get(i);
@@ -511,23 +519,25 @@ public class GroupHelper {
             }
 
             if (contains) {
-                Cursor labelCursor = context.getContentResolver().query(ContactsContract.Groups.CONTENT_URI,
-                        new String[]{
-                                ContactsContract.Groups.TITLE,
-                                ContactsContract.Groups.ACCOUNT_NAME,
-                                ContactsContract.Groups._ID,
-                                ContactsContract.Groups.SOURCE_ID
-                        },
-                        ContactsContract.Groups.TITLE + "='" + allTitles.get(i)
-                                + "' AND " + ContactsContract.Groups.ACCOUNT_NAME + getSuffix(accNameArray.length),
-                        accNameArray,
-                        null);
-                while (labelCursor.moveToNext()) {
-                    if (!systemLabelIds.contains(labelCursor.getString(labelCursor.getColumnIndex(ContactsContract.Groups._ID)))) {
-                        sourceIdList.add(labelCursor.getString(labelCursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
+                if (accNameArray.length != 0) {
+                    Cursor labelCursor = context.getContentResolver().query(ContactsContract.Groups.CONTENT_URI,
+                            new String[]{
+                                    ContactsContract.Groups.TITLE,
+                                    ContactsContract.Groups.ACCOUNT_NAME,
+                                    ContactsContract.Groups._ID,
+                                    ContactsContract.Groups.SOURCE_ID
+                            },
+                            ContactsContract.Groups.TITLE + "='" + allTitles.get(i)
+                                    + "' AND " + ContactsContract.Groups.ACCOUNT_NAME + getSuffix(accNameArray.length),
+                            accNameArray,
+                            null);
+                    while (labelCursor.moveToNext()) {
+                        if (!systemLabelIds.contains(labelCursor.getString(labelCursor.getColumnIndex(ContactsContract.Groups._ID)))) {
+                            sourceIdList.add(labelCursor.getString(labelCursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
+                        }
                     }
+                    labelCursor.close();
                 }
-                labelCursor.close();
             }
         }
         String[] sourceIdArray = new String[sourceIdList.size()];
@@ -546,21 +556,23 @@ public class GroupHelper {
      */
     public static List<String> getAccountNamesForRawIds(Context context, String[] rawIds) {
         List<String> accNames = new ArrayList<>();
-        Cursor cursor = context.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
-                new String[]{
-                        ContactsContract.RawContacts._ID,
-                        ContactsContract.RawContacts.ACCOUNT_NAME
-                },
-                ContactsContract.RawContacts._ID + getSuffix(rawIds.length),
-                rawIds,
-                null);
-        while (cursor.moveToNext()) {
-            String accName = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME));
-            if (!accNames.contains(accName)) {
-                accNames.add(accName);
+        if (rawIds.length != 0) {
+            Cursor cursor = context.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
+                    new String[]{
+                            ContactsContract.RawContacts._ID,
+                            ContactsContract.RawContacts.ACCOUNT_NAME
+                    },
+                    ContactsContract.RawContacts._ID + getSuffix(rawIds.length),
+                    rawIds,
+                    null);
+            while (cursor.moveToNext()) {
+                String accName = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME));
+                if (!accNames.contains(accName)) {
+                    accNames.add(accName);
+                }
             }
+            cursor.close();
         }
-        cursor.close();
         return accNames;
     }
 
@@ -610,20 +622,22 @@ public class GroupHelper {
                 labelIdArray[j] = currentContactLabels.get(j);
             }
             List<String> finalList = new ArrayList<>();
-            Cursor groupCursor = context.getContentResolver().query(ContactsContract.Groups.CONTENT_URI,
-                    new String[]{
-                            ContactsContract.Groups._ID
-                    },
-                    ContactsContract.Groups._ID + getSuffix(labelIdArray.length),
-                    labelIdArray,
-                    null);
-            while (groupCursor.moveToNext()){
-                String labelId = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups._ID));
-                if(!systemIds.contains(labelId)){
-                    finalList.add(labelId);
+            if (labelIdArray.length != 0) {
+                Cursor groupCursor = context.getContentResolver().query(ContactsContract.Groups.CONTENT_URI,
+                        new String[]{
+                                ContactsContract.Groups._ID
+                        },
+                        ContactsContract.Groups._ID + getSuffix(labelIdArray.length),
+                        labelIdArray,
+                        null);
+                while (groupCursor.moveToNext()) {
+                    String labelId = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups._ID));
+                    if (!systemIds.contains(labelId)) {
+                        finalList.add(labelId);
+                    }
                 }
+                groupCursor.close();
             }
-            groupCursor.close();
             if(finalList.isEmpty()){
                 uncategorizedContacts.add(allContactIds.get(i));
             }
