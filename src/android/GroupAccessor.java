@@ -19,6 +19,7 @@ import com.q.users.cordova.plugin.RawIdLabelId;
 import com.q.users.cordova.plugin.GroupHelper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -117,41 +118,61 @@ public class GroupAccessor {
         ArrayList<ContentProviderOperation> ops =
                 new ArrayList<>();
         String[] rawContactIds = GroupHelper.getRawContactIds(app.getActivity(), contactIds);
-        HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountNamePair(app.getActivity(), rawContactIds);
-        HashMap<String, String> accNameLabelId = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceId);
-        List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawContactIds);
+        if (rawContactIds.length != 0) {
+            boolean sourceIdExists = ValidationUtil.isSourceIdExisting(app.getActivity(), sourceId);
+            List<String> missingContacts = ValidationUtil.getMissingContactIds(app.getActivity(), contactIds);
+            if (sourceIdExists && missingContacts.isEmpty()) {
+                HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountNamePair(app.getActivity(), rawContactIds);
+                HashMap<String, String> accNameLabelId = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceId);
+                List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawContactIds);
 
-        for (int i = 0; i < rawContactIds.length; i++) {
-            String labelId = accNameLabelId.get(rawIdAccName.get(rawContactIds[i]));
-            if (labelId != null) {
-                for (int j = 0; j < existingLabels.size(); j++) {
-                    if (existingLabels.get(j).rawId.equals(rawContactIds[i]) && existingLabels.get(j).labelId.equals(labelId)) {
-                        ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
-                                .withSelection(ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
-                                                + "' AND " + ContactsContract.Data.DATA1 + "='" + labelId
-                                                + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + "='" + rawContactIds[i] + "'",
-                                        null)
-                                .withYieldAllowed(i == rawContactIds.length - 1)
-                                .build());
+                for (int i = 0; i < rawContactIds.length; i++) {
+                    String labelId = accNameLabelId.get(rawIdAccName.get(rawContactIds[i]));
+                    if (labelId != null) {
+                        for (int j = 0; j < existingLabels.size(); j++) {
+                            if (existingLabels.get(j).rawId.equals(rawContactIds[i]) && existingLabels.get(j).labelId.equals(labelId)) {
+                                ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
+                                        .withSelection(ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
+                                                        + "' AND " + ContactsContract.Data.DATA1 + "='" + labelId
+                                                        + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + "='" + rawContactIds[i] + "'",
+                                                null)
+                                        .withYieldAllowed(i == rawContactIds.length - 1)
+                                        .build());
+                            } else {
+                                Log.d("delete_checker", "not that one!!! " + rawContactIds[i]);
+                            }
+                        }
                     } else {
-                        Log.d("delete_checker", "not that one!!! " + rawContactIds[i]);
+                        Log.d("delete_checker", "no label for that contact" + rawContactIds[i]);
                     }
                 }
-            } else {
-                Log.d("delete_checker", "no label for that contact" + rawContactIds[i]);
-            }
-        }
 
-        try {
-            app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            return e.getMessage();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-            return e.getMessage();
+                try {
+                    app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                    return e.getMessage();
+                } catch (OperationApplicationException e) {
+                    e.printStackTrace();
+                    return e.getMessage();
+                }
+                return QUsersCordova.SUCCESS;
+            } else {
+                String returnMessage = "";
+                if (!sourceIdExists) {
+                    returnMessage += QUsersCordova.MISSING_LABEL_ERROR;
+                }
+                if (!missingContacts.isEmpty()) {
+                    if (!returnMessage.equals("")) {
+                        returnMessage += " ";
+                    }
+                    returnMessage += ValidationUtil.getMissingErrorMessage("Contact", missingContacts);
+                }
+                return returnMessage;
+            }
+        } else {
+            return QUsersCordova.MISSING_CONTACT_ERROR;
         }
-        return QUsersCordova.SUCCESS;
     }
 
     /**
@@ -165,47 +186,91 @@ public class GroupAccessor {
         ArrayList<ContentProviderOperation> ops =
                 new ArrayList<>();
         String[] rawContactIds = GroupHelper.getRawContactIds(app.getActivity(), contactIds);
-        HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountNamePair(app.getActivity(), rawContactIds);
-        HashMap<String, String> accNameLabelId = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceId);
-        List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawContactIds);
-        for (int i = 0; i < rawContactIds.length; i++) {
-            String labelId = accNameLabelId.get(rawIdAccName.get(rawContactIds[i]));
-            boolean exists = false;
-            if (labelId != null) {
-                for (int j = 0; j < existingLabels.size(); j++) {
-                    if (existingLabels.get(j).rawId.equals(rawContactIds[i]) && existingLabels.get(j).labelId.equals(labelId)) {
-                        exists = true;
+        if (rawContactIds.length != 0) {
+            boolean sourceIdExists = ValidationUtil.isSourceIdExisting(app.getActivity(), sourceId);
+            List<String> missingContacts = ValidationUtil.getMissingContactIds(app.getActivity(), contactIds);
+            if (sourceIdExists && missingContacts.isEmpty()) {
+                HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountNamePair(app.getActivity(), rawContactIds);
+                HashMap<String, String> accNameLabelId = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceId);
+                List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawContactIds);
+                List<String> failedList = new ArrayList<>();
+                for (int i = 0; i < rawContactIds.length; i++) {
+                    String labelId = accNameLabelId.get(rawIdAccName.get(rawContactIds[i]));
+                    boolean exists = false;
+                    if (labelId != null) {
+                        for (int j = 0; j < existingLabels.size(); j++) {
+                            if (existingLabels.get(j).rawId.equals(rawContactIds[i]) && existingLabels.get(j).labelId.equals(labelId)) {
+                                exists = true;
+                            }
+                        }
+                        if (!exists) {
+                            ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                                    .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawContactIds[i])
+                                    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE)
+                                    .withValue(ContactsContract.Data.DATA1, accNameLabelId.get(rawIdAccName.get(rawContactIds[i])))
+                                    .withYieldAllowed(i == contactIds.length - 1)
+                                    .build());
+                        } else {
+                            Log.d("duplicate_checker", "duplicate!!! " + rawContactIds[i]);
+                        }
+
+                    } else {
+                        Log.d("duplicate_checker", "no label for that contact" + rawContactIds[i]);
+                        failedList.add(rawContactIds[i]);
                     }
                 }
-                if (!exists) {
-                    ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                            .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawContactIds[i])
-                            .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE)
-                            .withValue(ContactsContract.Data.DATA1, accNameLabelId.get(rawIdAccName.get(rawContactIds[i])))
-                            .withYieldAllowed(i == contactIds.length - 1)
-                            .build());
-                } else {
-                    Log.d("duplicate_checker", "duplicate!!! " + rawContactIds[i]);
+                if (!failedList.isEmpty()) {
+                    String errorMessage = "Failed to add label" + sourceId + " to contact(s): ";
+                    HashMap<String, String> rawIdContactIdPair = GroupHelper.getExistingRawIdContactIdPairs(app.getActivity());
+                    List<String> convertedContactIds = new ArrayList<>();
+                    for (int i = 0; i < failedList.size(); i++) {
+                        String contactId = rawIdContactIdPair.get(failedList.get(i));
+                        if (!convertedContactIds.contains(contactId)) {
+                            convertedContactIds.add(contactId);
+                        }
+                    }
+                    for (int i = 0; i < convertedContactIds.size(); i++) {
+                        errorMessage += convertedContactIds.get(i);
+                        if (i != (convertedContactIds.size() - 1)) {
+                            errorMessage += ", ";
+                        } else {
+                            errorMessage += ".";
+                        }
+
+                    }
+                    errorMessage+= " Label "+sourceId+" is not shared with the contact.";
+                    return errorMessage;
                 }
 
+                try {
+                    ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+                    if (results.length >= 1) {
+                        Log.d("duplicate_checker", results[0].toString());
+                    }
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                    return e.getMessage();
+                } catch (OperationApplicationException e) {
+                    e.printStackTrace();
+                    return e.getMessage();
+                }
+                return QUsersCordova.SUCCESS;
             } else {
-                Log.d("duplicate_checker", "no label for that contact" + rawContactIds[i]);
+                String returnMessage = "";
+                if (!sourceIdExists) {
+                    returnMessage += QUsersCordova.MISSING_LABEL_ERROR;
+                }
+                if (!missingContacts.isEmpty()) {
+                    if (!returnMessage.equals("")) {
+                        returnMessage += " ";
+                    }
+                    returnMessage += ValidationUtil.getMissingErrorMessage("Contact", missingContacts);
+                }
+                return returnMessage;
             }
+        } else {
+            return QUsersCordova.MISSING_CONTACT_ERROR;
         }
-
-        try {
-            ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-            if (results.length >= 1) {
-                Log.d("duplicate_checker", results[0].toString());
-            }
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            return e.getMessage();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-            return e.getMessage();
-        }
-        return QUsersCordova.SUCCESS;
     }
 
     /**
@@ -217,24 +282,28 @@ public class GroupAccessor {
     protected String removeLabelFromData(String sourceId) {
         ArrayList<ContentProviderOperation> ops =
                 new ArrayList<>();
-
-        ops.add(ContentProviderOperation.newDelete(ContactsContract.Groups.CONTENT_URI)
-                .withSelection(ContactsContract.Groups.SOURCE_ID + "=?", new String[]{sourceId})
-                .withYieldAllowed(true)
-                .build());
-        try {
-            ContentProviderResult[] result = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-            Log.d("delete_checker", "removeLabelFromData: " + result.toString());
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            return e.getMessage();
-        } catch (OperationApplicationException e) {
-            Log.d("error_tag", e.getMessage());
-            e.printStackTrace();
-            return e.getMessage();
+        boolean sourceIdExists = ValidationUtil.isSourceIdExisting(app.getActivity(), sourceId);
+        if (sourceIdExists) {
+            ops.add(ContentProviderOperation.newDelete(ContactsContract.Groups.CONTENT_URI)
+                    .withSelection(ContactsContract.Groups.SOURCE_ID + "=?", new String[]{sourceId})
+                    .withYieldAllowed(true)
+                    .build());
+            try {
+                ContentProviderResult[] result = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+                Log.d("delete_checker", "removeLabelFromData: " + result.toString());
+            } catch (RemoteException e) {
+                e.printStackTrace();
+                return e.getMessage();
+            } catch (OperationApplicationException e) {
+                Log.d("error_tag", e.getMessage());
+                e.printStackTrace();
+                return e.getMessage();
+            }
+            GroupHelper.requestSyncNow(app.getActivity());
+            return QUsersCordova.SUCCESS;
+        } else {
+            return QUsersCordova.MISSING_LABEL_ERROR;
         }
-        GroupHelper.requestSyncNow(app.getActivity());
-        return QUsersCordova.SUCCESS;
     }
 
     /**
@@ -244,67 +313,73 @@ public class GroupAccessor {
      * @return list of {@link QbixGroup} POJO
      */
     protected List<QbixGroup> getLabelsBySourceId(String[] sourceIds) {
-        Cursor groupCursor = app.getActivity().getContentResolver().query(ContactsContract.Groups.CONTENT_SUMMARY_URI,
-                new String[]{
-                        ContactsContract.Groups.SOURCE_ID,
-                        ContactsContract.Groups.TITLE,
-                        ContactsContract.Groups.ACCOUNT_NAME,
-                        ContactsContract.Groups.NOTES,
-                        ContactsContract.Groups.SUMMARY_COUNT,
-                        ContactsContract.Groups.GROUP_VISIBLE,
-                        ContactsContract.Groups.DELETED,
-                        ContactsContract.Groups.SHOULD_SYNC,
-                        ContactsContract.Groups.GROUP_IS_READ_ONLY
-                },
-                ContactsContract.Groups.SOURCE_ID + GroupHelper.getSuffix(sourceIds.length),
-                sourceIds,
-                null);
-        AccountManager accountManager = AccountManager.get(app.getActivity());
-        Account[] accounts = accountManager.getAccounts();
-        List<AccNameGroup> accNameGroups = new ArrayList<>();
-        HashMap<String, String> rawIdContactIdPair = GroupHelper.getExistingRawIdContactIdPairs(app.getActivity());
-        while (groupCursor.moveToNext()) {
-            AccNameGroup group = new AccNameGroup();
-            group.sourceId = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID));
-            group.title = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.TITLE));
-            group.accountName = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_NAME));
-            group.summaryCount = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.SUMMARY_COUNT));
-            group.notes = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.NOTES));
-            group.isVisible = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.GROUP_VISIBLE)) == 0;
-            group.isDeleted = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.DELETED)) == 1;
-            group.shouldSync = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.SHOULD_SYNC)) == 1;
-            group.readOnly = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.GROUP_IS_READ_ONLY)) == 1;
-            if (group.sourceId != null) {
-                accNameGroups.add(group);
-            }
-        }
-        groupCursor.close();
-        List<String> uniqueSourceId = new ArrayList<>();
         List<QbixGroup> finalGroups = new ArrayList<>();
-        for (int i = 0; i < accNameGroups.size(); i++) {
-            AccNameGroup accNameGroup = accNameGroups.get(i);
-            if (!uniqueSourceId.contains(accNameGroup.sourceId)) {
-                GetRealGroup:
-                {
-                    for (int j = 0; j < accounts.length; j++) {
-                        if (accNameGroup.accountName.equals(accounts[j].name)) {
-                            for (int k = 0; k < accNameGroups.size(); k++) {
-                                AccNameGroup realGroup = accNameGroups.get(k);
-                                if (realGroup.sourceId.equals(accNameGroup.sourceId) && realGroup.accountName.equals(accNameGroup.accountName)) {
-                                    realGroup.contactIds = GroupHelper.getContactIds(rawIdContactIdPair,
-                                            GroupHelper.getRawIdsBySourceId(app.getActivity(), realGroup.sourceId));
-                                    finalGroups.add(realGroup);
-                                    uniqueSourceId.add(realGroup.sourceId);
-                                    break GetRealGroup;
+        if (sourceIds.length > 0) {
+            List<String> missingLabels = ValidationUtil.getMissingSourceIds(app.getActivity(), sourceIds);
+            if (missingLabels.isEmpty()) {
+                Cursor groupCursor = app.getActivity().getContentResolver().query(ContactsContract.Groups.CONTENT_SUMMARY_URI,
+                        new String[]{
+                                ContactsContract.Groups.SOURCE_ID,
+                                ContactsContract.Groups.TITLE,
+                                ContactsContract.Groups.ACCOUNT_NAME,
+                                ContactsContract.Groups.NOTES,
+                                ContactsContract.Groups.SUMMARY_COUNT,
+                                ContactsContract.Groups.GROUP_VISIBLE,
+                                ContactsContract.Groups.DELETED,
+                                ContactsContract.Groups.SHOULD_SYNC,
+                                ContactsContract.Groups.GROUP_IS_READ_ONLY
+                        },
+                        ContactsContract.Groups.SOURCE_ID + GroupHelper.getSuffix(sourceIds.length),
+                        sourceIds,
+                        null);
+                AccountManager accountManager = AccountManager.get(app.getActivity());
+                Account[] accounts = accountManager.getAccounts();
+                List<AccNameGroup> accNameGroups = new ArrayList<>();
+                HashMap<String, String> rawIdContactIdPair = GroupHelper.getExistingRawIdContactIdPairs(app.getActivity());
+                while (groupCursor.moveToNext()) {
+                    AccNameGroup group = new AccNameGroup();
+                    group.sourceId = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID));
+                    group.title = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.TITLE));
+                    group.accountName = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_NAME));
+                    group.summaryCount = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.SUMMARY_COUNT));
+                    group.notes = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.NOTES));
+                    group.isVisible = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.GROUP_VISIBLE)) == 0;
+                    group.isDeleted = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.DELETED)) == 1;
+                    group.shouldSync = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.SHOULD_SYNC)) == 1;
+                    group.readOnly = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.GROUP_IS_READ_ONLY)) == 1;
+                    if (group.sourceId != null) {
+                        accNameGroups.add(group);
+                    }
+                }
+                groupCursor.close();
+                List<String> uniqueSourceId = new ArrayList<>();
+                for (int i = 0; i < accNameGroups.size(); i++) {
+                    AccNameGroup accNameGroup = accNameGroups.get(i);
+                    if (!uniqueSourceId.contains(accNameGroup.sourceId)) {
+                        GetRealGroup:
+                        {
+                            for (int j = 0; j < accounts.length; j++) {
+                                if (accNameGroup.accountName.equals(accounts[j].name)) {
+                                    for (int k = 0; k < accNameGroups.size(); k++) {
+                                        AccNameGroup realGroup = accNameGroups.get(k);
+                                        if (realGroup.sourceId.equals(accNameGroup.sourceId) && realGroup.accountName.equals(accNameGroup.accountName)) {
+                                            realGroup.contactIds = GroupHelper.getContactIds(rawIdContactIdPair,
+                                                    GroupHelper.getRawIdsBySourceId(app.getActivity(), realGroup.sourceId));
+                                            finalGroups.add(realGroup);
+                                            uniqueSourceId.add(realGroup.sourceId);
+                                            break GetRealGroup;
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+            return finalGroups;
+        } else {
+            return new ArrayList<>();
         }
-
-        return finalGroups;
     }
 
     /**
@@ -353,25 +428,30 @@ public class GroupAccessor {
      * @return success message if succeed and exception message if failed
      */
     protected String editLabelInDatabase(String sourceId, String title) {
-        ArrayList<ContentProviderOperation> ops =
-                new ArrayList<>();
-        ops.add(ContentProviderOperation.newUpdate(ContactsContract.Groups.CONTENT_URI)
-                .withSelection(ContactsContract.Groups.SOURCE_ID + "=?", new String[]{sourceId})
-                .withValue(ContactsContract.Groups.TITLE, title)
-                .withYieldAllowed(true)
-                .build()
-        );
+        boolean sourceIdExists = ValidationUtil.isSourceIdExisting(app.getActivity(), sourceId);
+        if (sourceIdExists) {
+            ArrayList<ContentProviderOperation> ops =
+                    new ArrayList<>();
+            ops.add(ContentProviderOperation.newUpdate(ContactsContract.Groups.CONTENT_URI)
+                    .withSelection(ContactsContract.Groups.SOURCE_ID + "=?", new String[]{sourceId})
+                    .withValue(ContactsContract.Groups.TITLE, title)
+                    .withYieldAllowed(true)
+                    .build()
+            );
 
-        try {
-            ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            return e.getMessage();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-            return e.getMessage();
+            try {
+                ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+                return e.getMessage();
+            } catch (OperationApplicationException e) {
+                e.printStackTrace();
+                return e.getMessage();
+            }
+            return QUsersCordova.SUCCESS;
+        } else {
+            return QUsersCordova.MISSING_LABEL_ERROR;
         }
-        return QUsersCordova.SUCCESS;
     }
 
     /**
@@ -383,50 +463,91 @@ public class GroupAccessor {
      */
     protected String setLabelListForContact(String contactId, List<String> sourceIds) {
         String[] rawIds = GroupHelper.getRawContactIds(app.getActivity(), new String[]{contactId});
-        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
-        List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawIds);
-        List<String> systemLabelIds = GroupHelper.getSystemIds(app.getActivity());
-        String accountName = GroupHelper.getRawContactIdAccountName(app.getActivity(), rawIds[0]);
-        for (int i = 0; i < rawIds.length; i++) {
-            for (int j = 0; j < existingLabels.size(); j++) {
-                if (existingLabels.get(j).rawId.equals(rawIds[i]) && !systemLabelIds.contains(existingLabels.get(j).labelId)) {
-                    ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
-                            .withSelection(ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
-                                            + "' AND " + ContactsContract.Data.DATA1 + "='" + existingLabels.get(j).labelId
-                                            + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + "='" + rawIds[i] + "'",
-                                    null)
-                            .withYieldAllowed(i == rawIds.length - 1)
-                            .build());
-                }
-            }
-        }
-
-        if (!sourceIds.isEmpty()) {
-            for (int i = 0; i < sourceIds.size(); i++) {
-                HashMap<String, String> accNameLabelIdPair = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceIds.get(i));
-                for (int j = 0; j < rawIds.length; j++) {
-                    if (!systemLabelIds.contains(accNameLabelIdPair.get(accountName))) {
-                        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE)
-                                .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawIds[j])
-                                .withValue(ContactsContract.Data.DATA1, accNameLabelIdPair.get(accountName))
-                                .withYieldAllowed(i == sourceIds.size() - 1)
-                                .build());
+        if (rawIds.length != 0) {
+            boolean contactExists = ValidationUtil.isContactExisting(app.getActivity(), contactId);
+            List<String> missingLabels = ValidationUtil.getMissingSourceIds(app.getActivity(), sourceIds);
+            if (contactExists && missingLabels.isEmpty()) {
+                List<String> sourceIdList = Arrays.asList(sourceIds);
+                ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+                List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawIds);
+                List<String> systemLabelIds = GroupHelper.getSystemIds(app.getActivity());
+                String accountName = GroupHelper.getRawContactIdAccountName(app.getActivity(), rawIds[0]);
+                for (int i = 0; i < rawIds.length; i++) {
+                    for (int j = 0; j < existingLabels.size(); j++) {
+                        if (existingLabels.get(j).rawId.equals(rawIds[i]) && !systemLabelIds.contains(existingLabels.get(j).labelId)) {
+                            ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
+                                    .withSelection(ContactsContract.Data.MIMETYPE + "='" + ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
+                                                    + "' AND " + ContactsContract.Data.DATA1 + "='" + existingLabels.get(j).labelId
+                                                    + "' AND " + ContactsContract.Data.RAW_CONTACT_ID + "='" + rawIds[i] + "'",
+                                            null)
+                                    .withYieldAllowed(i == rawIds.length - 1)
+                                    .build());
+                        }
                     }
                 }
-            }
-        }
 
-        try {
-            ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            return e.getMessage();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-            return e.getMessage();
+                List<String> failedList = new ArrayList<>();
+                if (!sourceIdList.isEmpty()) {
+                    for (int i = 0; i < sourceIdList.size(); i++) {
+                        HashMap<String, String> accNameLabelIdPair = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceIdList.get(i));
+                        String labelId = accNameLabelIdPair.get(accountName);
+                        if (labelId != null) {
+                            for (int j = 0; j < rawIds.length; j++) {
+                                if (!systemLabelIds.contains(labelId)) {
+                                    ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                                            .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE)
+                                            .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawIds[j])
+                                            .withValue(ContactsContract.Data.DATA1, labelId)
+                                            .withYieldAllowed(i == sourceIdList.size() - 1)
+                                            .build());
+                                }
+                            }
+                        } else {
+                            failedList.add(sourceIdList.get(i));
+                        }
+                    }
+                }
+
+                if (!failedList.isEmpty()) {
+                    String errorMessage = "Failed to add following labels to contact "+contactId+": ";
+                    for (int i = 0; i < failedList.size(); i++) {
+                        errorMessage += failedList.get(i);
+                        if (i != (failedList.size() - 1)) {
+                            errorMessage += ", ";
+                        } else {
+                            errorMessage += ".";
+                        }
+                    }
+                    errorMessage+= " Contact "+contactId+" is not shared with the labels.";
+                    return errorMessage;
+                }
+
+                try {
+                    ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                    return e.getMessage();
+                } catch (OperationApplicationException e) {
+                    e.printStackTrace();
+                    return e.getMessage();
+                }
+                return QUsersCordova.SUCCESS;
+            } else {
+                String returnMessage = "";
+                if (!contactExists) {
+                    returnMessage += QUsersCordova.MISSING_CONTACT_ERROR;
+                }
+                if (!missingLabels.isEmpty()) {
+                    if (!returnMessage.equals("")) {
+                        returnMessage += " ";
+                    }
+                    returnMessage += ValidationUtil.getMissingErrorMessage("Label", missingLabels);
+                }
+                return returnMessage;
+            }
+        } else {
+            return QUsersCordova.MISSING_CONTACT_ERROR;
         }
-        return QUsersCordova.SUCCESS;
     }
 
     /**
@@ -441,15 +562,25 @@ public class GroupAccessor {
         for (int i = 0; i < contactIds.size(); i++) {
             contactIdArray[i] = contactIds.get(i);
         }
-        String[] rawIds = GroupHelper.getRawContactIds(app.getActivity(), contactIdArray);
-        String[] sourceIds;
-        if (doUnion) {
-            sourceIds = GroupHelper.getUnionSourceIds(app.getActivity(), rawIds);
+        List<String> missingContacts = ValidationUtil.getMissingContactIds(app.getActivity(), contactIdArray);
+        if (missingContacts.isEmpty()) {
+            String[] rawIds = GroupHelper.getRawContactIds(app.getActivity(), contactIdArray);
+            List<QbixGroup> groupList;
+            if (rawIds.length != 0) {
+                String[] sourceIds;
+                if (doUnion) {
+                    sourceIds = GroupHelper.getUnionSourceIds(app.getActivity(), rawIds);
+                } else {
+                    sourceIds = GroupHelper.getNotUnionSourceIds(app.getActivity(), rawIds);
+                }
+                groupList = getLabelsBySourceId(sourceIds);
+            } else {
+                groupList = new ArrayList<>();
+            }
+            return groupList;
         } else {
-            sourceIds = GroupHelper.getNotUnionSourceIds(app.getActivity(), rawIds);
+            return new ArrayList<>();
         }
-        List<QbixGroup> groupList = getLabelsBySourceId(sourceIds);
-        return groupList;
     }
 
     /**
