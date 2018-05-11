@@ -461,7 +461,7 @@ public class GroupAccessor {
      * @param sourceIds List of sourceIds which labels wanted to be added.
      * @return success message if succeed and exception message if failed
      */
-    protected String setLabelListForContact(String contactId, List<String> sourceIds) {
+    protected String setLabelListForContact(String contactId, String[] sourceIds) {
         String[] rawIds = GroupHelper.getRawContactIds(app.getActivity(), new String[]{contactId});
         if (rawIds.length != 0) {
             boolean contactExists = ValidationUtil.isContactExisting(app.getActivity(), contactId);
