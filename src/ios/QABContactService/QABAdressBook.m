@@ -181,10 +181,10 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
             return @"Uncategorized";
             break;
         case QABGroupMemberFilterHasPhoto:
-            return @"Has Company";
+            return @"Has Photo";
             break;
         case QABGroupMemberFilterHasEmail:
-            return @"Has Company";
+            return @"Has Email";
             break;
             
         default:
