@@ -40,7 +40,7 @@
 }
 
 -(ABAddressBookRef) getAddressBookRef {
-    return [[self addressBook] retain];
+    return [self addressBook];
 }
     
 - (instancetype)init {
