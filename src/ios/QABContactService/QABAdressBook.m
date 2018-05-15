@@ -450,7 +450,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 }
 
 -(BOOL) removeMember:(ABRecordRef) member {
-    if(member == nil && [member identifier] == kABInvalidPropertyType) {
+    if(member == nil && member == kABInvalidPropertyType) {
         return false;
     }
     CFErrorRef error = NULL;
@@ -466,7 +466,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 }
 
 -(BOOL) addMember:(ABRecordRef) member {
-    if(member == nil && [member identifier] == kABInvalidPropertyType) {
+    if(member == nil && member == kABInvalidPropertyType) {
         return false;
     }
     CFErrorRef error = NULL;
