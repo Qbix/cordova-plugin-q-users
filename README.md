@@ -160,7 +160,7 @@ Add existing label to given contact(s).
 
 __Example__:
 ```js
-Q.Users.Cordova.Labels.addContact(["54ed2c5e8de2b47c", [5,12,25]],function(data){console.log(data);}, function(err){console.log(err)})
+Q.Users.Cordova.Labels.addContact("54ed2c5e8de2b47c",[5,12,25],function(data){console.log(data);}, function(err){console.log(err)})
 ```
 
 ## removeContact
@@ -175,7 +175,7 @@ Removes label from given contact(s).
 
 __Example__:
 ```js
-Q.Users.Cordova.Labels.removeContact(["54ed2c5e8de2b47c", [5,12,25]],function(data){console.log(data);}, function(err){console.log(err)})
+Q.Users.Cordova.Labels.removeContact("54ed2c5e8de2b47c",[5,12,25],function(data){console.log(data);}, function(err){console.log(err)})
 ```
 
 ## setForContact
@@ -190,7 +190,7 @@ Sets all the labels for the contact. This can be used to add or remove labels si
 
 __Example__:
 ```js
-Q.Users.Cordova.Labels.setForContact([5,["54ed2c5e8de2b47c", "130e58e00af1beec"]],function(data){console.log(data);}, function(err){console.log(err)})
+Q.Users.Cordova.Labels.setForContact(5,["54ed2c5e8de2b47c", "130e58e00af1beec"],function(data){console.log(data);}, function(err){console.log(err)})
 ```
 
 ## smart

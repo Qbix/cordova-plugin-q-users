@@ -88,7 +88,7 @@ public class GroupHelper {
                 Log.i("contactId_checker", "contains: " + rawIdContactId.get(String.valueOf(rawIds.get(i))));
             }
         }
-        return rawIds;
+        return contactIds;
     }
 
     /**
@@ -775,7 +775,7 @@ public class GroupHelper {
         List<String> byTimeContacts = new ArrayList<>();
         Cursor timeCursor = context.getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
                 new String[]{
-
+                        ContactsContract.Contacts._ID
                 },
                 null,
                 null,
