@@ -100,39 +100,6 @@ public class ValidationUtil {
     }
 
     /**
-     * Checks if all contactIds are existing in database.
-     *
-     * @param context    Context instance for db interactions
-     * @param contactIds Array of contactIds which wanted to be checked.
-     * @return List of missing contacts' ids.
-     */
-    protected static List<String> getMissingContactIds(Context context, String[] contactIds, String sourceId) {
-        List<String> existingContacts = new ArrayList<>();
-        List<String> missingContacts = new ArrayList<>();
-        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
-                new String[]{
-                        ContactsContract.Data.CONTACT_ID,
-                        ContactsContract.Data.DATA1
-                },
-                ContactsContract.Data.MIMETYPE+"='"+ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE
-                        +"' AND "+ContactsContract.Data.CONTACT_ID + GroupHelper.getSuffix(contactIds.length),
-                contactIds,
-                null);
-        while (cursor.moveToNext()) {
-            if (!existingContacts.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID)))) {
-                existingContacts.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID)));
-            }
-        }
-        for (int i = 0; i < contactIds.length; i++) {
-            if (!existingContacts.contains(contactIds[i]) && !missingContacts.contains(contactIds[i])) {
-                missingContacts.add(contactIds[i]);
-            }
-        }
-        cursor.close();
-        return missingContacts;
-    }
-
-    /**
      * Checks if all contactId is existing in database.
      *
      * @param context   Context instance for db interactions
