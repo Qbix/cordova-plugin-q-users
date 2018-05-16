@@ -10,6 +10,7 @@ import org.apache.cordova.PermissionHelper;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +77,7 @@ public class QUsersCordova extends CordovaPlugin {
     protected static final String NO_ACCOUNT_ERROR = "No accounts bound to device. There is no labels for local contacts.";
     protected static final String MISSING_CONTACT_ERROR = "There is no contactId(s).";
     protected static final String MISSING_LABEL_ERROR = "There is no labelId(s).";
+    protected static final String READ_ONLY_LABEL_ERROR = "LabelId is read only and cannot be removed.";
     protected static final String NOT_SUPPORTED_ERROR = "Not supporting version.";
     protected static final String PERMISSION_DENIED_ERROR = "Permission denied.";
 
@@ -548,11 +550,14 @@ public class QUsersCordova extends CordovaPlugin {
                     || name.equals(HAS_PHOTO_SMART_NAME))) {
                 String[] contacts = groupAccessor.getContactList(name);
                 if (contacts != null) {
+                    JSONObject jsonSmart = new JSONObject();
+                    jsonSmart.put("title", name);
                     JSONArray jsonContacts = new JSONArray();
                     for (int i = 0; i < contacts.length; i++) {
                         jsonContacts.put(contacts[i]);
                     }
-                    callbackContext.success(jsonContacts);
+                    jsonSmart.put("contactIds", jsonContacts);
+                    callbackContext.success(jsonSmart);
                 } else {
                     callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
                 }

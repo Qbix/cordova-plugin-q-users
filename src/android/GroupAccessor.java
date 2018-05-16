@@ -220,7 +220,7 @@ public class GroupAccessor {
                     }
                 }
                 if (!failedList.isEmpty()) {
-                    String errorMessage = "Failed to add label" + sourceId + " to contact(s): ";
+                    String errorMessage = "Failed to add label " + sourceId + " to contact(s): ";
                     HashMap<String, String> rawIdContactIdPair = GroupHelper.getExistingRawIdContactIdPairs(app.getActivity());
                     List<String> convertedContactIds = new ArrayList<>();
                     for (int i = 0; i < failedList.size(); i++) {
@@ -284,23 +284,28 @@ public class GroupAccessor {
                 new ArrayList<>();
         boolean sourceIdExists = ValidationUtil.isSourceIdExisting(app.getActivity(), sourceId);
         if (sourceIdExists) {
-            ops.add(ContentProviderOperation.newDelete(ContactsContract.Groups.CONTENT_URI)
-                    .withSelection(ContactsContract.Groups.SOURCE_ID + "=?", new String[]{sourceId})
-                    .withYieldAllowed(true)
-                    .build());
-            try {
-                ContentProviderResult[] result = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-                Log.d("delete_checker", "removeLabelFromData: " + result.toString());
-            } catch (RemoteException e) {
-                e.printStackTrace();
-                return e.getMessage();
-            } catch (OperationApplicationException e) {
-                Log.d("error_tag", e.getMessage());
-                e.printStackTrace();
-                return e.getMessage();
+            List<String> readOnlyIds = GroupHelper.getReadOnlyIds(app.getActivity());
+            if (!readOnlyIds.contains(sourceId)) {
+                ops.add(ContentProviderOperation.newDelete(ContactsContract.Groups.CONTENT_URI)
+                        .withSelection(ContactsContract.Groups.SOURCE_ID + "=?", new String[]{sourceId})
+                        .withYieldAllowed(true)
+                        .build());
+                try {
+                    ContentProviderResult[] result = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+                    Log.d("delete_checker", "removeLabelFromData: " + result.toString());
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                    return e.getMessage();
+                } catch (OperationApplicationException e) {
+                    Log.d("error_tag", e.getMessage());
+                    e.printStackTrace();
+                    return e.getMessage();
+                }
+                GroupHelper.requestSyncNow(app.getActivity());
+                return QUsersCordova.SUCCESS;
+            } else {
+                return QUsersCordova.READ_ONLY_LABEL_ERROR;
             }
-            GroupHelper.requestSyncNow(app.getActivity());
-            return QUsersCordova.SUCCESS;
         } else {
             return QUsersCordova.MISSING_LABEL_ERROR;
         }

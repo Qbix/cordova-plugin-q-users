@@ -349,6 +349,31 @@ public class GroupHelper {
     }
 
     /**
+     * Gets all read only label sourceIds.
+     *
+     * @param context Context instance for db interactions
+     * @return List of read only labels' sourceIds
+     */
+    public static List<String> getReadOnlyIds(Context context) {
+        List<String> readOnlyIds = new ArrayList<>();
+        Cursor cursor = context.getContentResolver().query(ContactsContract.Groups.CONTENT_URI,
+                new String[]{
+                        ContactsContract.Groups.SOURCE_ID
+                },
+                ContactsContract.Groups.GROUP_IS_READ_ONLY + "='1'",
+                null,
+                null
+        );
+        while (cursor.moveToNext()) {
+            if (!readOnlyIds.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)))) {
+                readOnlyIds.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
+            }
+        }
+        cursor.close();
+        return readOnlyIds;
+    }
+
+    /**
      * Gets given rawContactId's account name.
      *
      * @param rawContactId rawContactId which account name wanted to be returned
