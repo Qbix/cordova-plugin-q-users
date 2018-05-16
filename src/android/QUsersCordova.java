@@ -43,6 +43,7 @@ public class QUsersCordova extends CordovaPlugin {
     private final int SET_LABEL_LIST_FOR_CONTACT_REQ_CODE = 14;
     private final int GET_NATIVE_LABEL_FOR_CONTACT_REQ_CODE = 15;
     private final int SMART_REQ_CODE = 16;
+    private final int ACCOUNT_VALIDATION_REQ_CODE = 17;
 
     //smart names
     /**
@@ -91,18 +92,6 @@ public class QUsersCordova extends CordovaPlugin {
     public QUsersCordova() {
     }
 
-    private void getReadPermission(int requestCode) {
-        PermissionHelper.requestPermission(this, requestCode, READ);
-    }
-
-    private void getWritePermission(int requestCode) {
-        PermissionHelper.requestPermission(this, requestCode, WRITE);
-    }
-
-    private void getAccountPermission(int requestCode) {
-        PermissionHelper.requestPermission(this, requestCode, ACCOUNTS);
-    }
-
     /**
      * Requests 2 permissions at the same time.
      *
@@ -143,20 +132,15 @@ public class QUsersCordova extends CordovaPlugin {
             this.groupAccessor = new GroupAccessor(this.cordova);
         }
 
-        if(!ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())){
-            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
-            return true;
-        }
-
         if (action.equals(GET_ALL_LABELS_ACTION)) {
-            if (PermissionHelper.hasPermission(this, READ)) {
+            if (PermissionHelper.hasPermission(this, READ) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         getLabels();
                     }
                 });
             } else {
-                getReadPermission(ALL_LABELS_REQ_CODE);
+                getDoublePermission(ALL_LABELS_REQ_CODE, READ, ACCOUNTS);
             }
 
             return true;
@@ -164,7 +148,7 @@ public class QUsersCordova extends CordovaPlugin {
             if (PermissionHelper.hasPermission(this, READ) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
-                            getLabels(executeArgs);
+                        getLabels(executeArgs);
                     }
                 });
             } else {
@@ -187,8 +171,8 @@ public class QUsersCordova extends CordovaPlugin {
         } else if (action.equals(ADD_CONTACT_TO_LABEL_ACTION)) {
             if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
-                    public void run() {                  
-                            addContactToLabel(executeArgs);
+                    public void run() {
+                        addContactToLabel(executeArgs);
                     }
                 });
             } else {
@@ -264,17 +248,22 @@ public class QUsersCordova extends CordovaPlugin {
      * Gets all labels asynchronously and set result to callback context's as success.
      */
     private void getLabels() {
-        List<QbixGroup> labels = groupAccessor.getAllLabels();
-        JSONArray jsonGroups = new JSONArray();
-        for (QbixGroup group :
-                labels) {
-            jsonGroups.put(group.toJson());
-        }
-        if (labels != null) {
-            callbackContext.success(jsonGroups);
+        if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
+            List<QbixGroup> labels = groupAccessor.getAllLabels();
+            JSONArray jsonGroups = new JSONArray();
+            for (QbixGroup group :
+                    labels) {
+                jsonGroups.put(group.toJson());
+            }
+            if (labels != null) {
+                callbackContext.success(jsonGroups);
+            } else {
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
+            }
         } else {
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
         }
+
     }
 
     /**
@@ -283,35 +272,39 @@ public class QUsersCordova extends CordovaPlugin {
      * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
      */
     private void getLabels(JSONArray args) {
-        try {
-            JSONArray labelIdArray = args.getJSONArray(0);
-            boolean idsAreValid = true;
-            for (int i = 0; i < labelIdArray.length(); i++) {
-                if (!ValidationUtil.nullOrEmptyChecker(labelIdArray.getString(i))) {
-                    idsAreValid = false;
-                }
-            }
-            if (idsAreValid && !ValidationUtil.isArrayEmpty(labelIdArray)) {
-                String[] sourceIdArray = new String[labelIdArray.length()];
+        if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
+            try {
+                JSONArray labelIdArray = args.getJSONArray(0);
+                boolean idsAreValid = true;
                 for (int i = 0; i < labelIdArray.length(); i++) {
-                    sourceIdArray[i] = labelIdArray.getString(i);
+                    if (!ValidationUtil.nullOrEmptyChecker(labelIdArray.getString(i))) {
+                        idsAreValid = false;
+                    }
                 }
-                List<QbixGroup> labels = groupAccessor.getLabelsBySourceId(sourceIdArray);
-                JSONArray jsonGroups = new JSONArray();
-                for (QbixGroup group :
-                        labels) {
-                    jsonGroups.put(group.toJson());
-                }
-                if (labels != null) {
-                    callbackContext.success(jsonGroups);
+                if (idsAreValid && !ValidationUtil.isArrayEmpty(labelIdArray)) {
+                    String[] sourceIdArray = new String[labelIdArray.length()];
+                    for (int i = 0; i < labelIdArray.length(); i++) {
+                        sourceIdArray[i] = labelIdArray.getString(i);
+                    }
+                    List<QbixGroup> labels = groupAccessor.getLabelsBySourceId(sourceIdArray);
+                    JSONArray jsonGroups = new JSONArray();
+                    for (QbixGroup group :
+                            labels) {
+                        jsonGroups.put(group.toJson());
+                    }
+                    if (labels != null) {
+                        callbackContext.success(jsonGroups);
+                    } else {
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
+                    }
                 } else {
-                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
                 }
-            } else {
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
+            } catch (JSONException e) {
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
             }
-        } catch (JSONException e) {
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+        } else {
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
         }
     }
 
@@ -321,32 +314,36 @@ public class QUsersCordova extends CordovaPlugin {
      * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
      */
     private void removeContactFromLabel(JSONArray args) {
-        try {
-            String labelId = args.getString(0);
-            boolean labelIdIsValid = ValidationUtil.nullOrEmptyChecker(labelId);
-            JSONArray contactIds = args.getJSONArray(1);
-            boolean idsAreValid = true;
-            for (int i = 0; i < contactIds.length(); i++) {
-                if (!ValidationUtil.canCastToInt(contactIds.getString(i))) {
-                    idsAreValid = false;
-                }
-            }
-            if (labelIdIsValid && idsAreValid && !ValidationUtil.isArrayEmpty(contactIds)) {
-                String[] idArray = new String[contactIds.length()];
+        if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
+            try {
+                String labelId = args.getString(0);
+                boolean labelIdIsValid = ValidationUtil.nullOrEmptyChecker(labelId);
+                JSONArray contactIds = args.getJSONArray(1);
+                boolean idsAreValid = true;
                 for (int i = 0; i < contactIds.length(); i++) {
-                    idArray[i] = contactIds.getString(i);
+                    if (!ValidationUtil.canCastToInt(contactIds.getString(i))) {
+                        idsAreValid = false;
+                    }
                 }
-                String removeMessage = groupAccessor.removeLabelFromContacts(labelId, idArray);
-                if (removeMessage.equals(SUCCESS)) {
-                    callbackContext.success();
+                if (labelIdIsValid && idsAreValid && !ValidationUtil.isArrayEmpty(contactIds)) {
+                    String[] idArray = new String[contactIds.length()];
+                    for (int i = 0; i < contactIds.length(); i++) {
+                        idArray[i] = contactIds.getString(i);
+                    }
+                    String removeMessage = groupAccessor.removeLabelFromContacts(labelId, idArray);
+                    if (removeMessage.equals(SUCCESS)) {
+                        callbackContext.success();
+                    } else {
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, removeMessage));
+                    }
                 } else {
-                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, removeMessage));
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
                 }
-            } else {
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
+            } catch (JSONException e) {
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
             }
-        } catch (JSONException e) {
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+        } else {
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
         }
     }
 
@@ -356,34 +353,38 @@ public class QUsersCordova extends CordovaPlugin {
      * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
      */
     private void addContactToLabel(JSONArray args) {
-        try {
-            String labelId = args.getString(0);
-            boolean labelIdIsValid = ValidationUtil.nullOrEmptyChecker(labelId);
-            JSONArray contactIds = args.getJSONArray(1);
-            boolean idsAreValid = true;
-            for (int i = 0; i < contactIds.length(); i++) {
-                if (!ValidationUtil.canCastToInt(contactIds.getString(i))) {
-                    idsAreValid = false;
-                }
-            }
-            if (labelIdIsValid && idsAreValid && !ValidationUtil.isArrayEmpty(contactIds)) {
-                String[] idArray = new String[contactIds.length()];
+        if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
+            try {
+                String labelId = args.getString(0);
+                boolean labelIdIsValid = ValidationUtil.nullOrEmptyChecker(labelId);
+                JSONArray contactIds = args.getJSONArray(1);
+                boolean idsAreValid = true;
                 for (int i = 0; i < contactIds.length(); i++) {
-                    idArray[i] = contactIds.getString(i);
+                    if (!ValidationUtil.canCastToInt(contactIds.getString(i))) {
+                        idsAreValid = false;
+                    }
                 }
-                String addMessage = groupAccessor.addLabelToContacts(labelId, idArray);
-                if (addMessage.equals(SUCCESS)) {
-                    callbackContext.success();
-                } else if (addMessage.equals(UNKNOWN_ERROR)) {
-                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, addMessage));
+                if (labelIdIsValid && idsAreValid && !ValidationUtil.isArrayEmpty(contactIds)) {
+                    String[] idArray = new String[contactIds.length()];
+                    for (int i = 0; i < contactIds.length(); i++) {
+                        idArray[i] = contactIds.getString(i);
+                    }
+                    String addMessage = groupAccessor.addLabelToContacts(labelId, idArray);
+                    if (addMessage.equals(SUCCESS)) {
+                        callbackContext.success();
+                    } else if (addMessage.equals(UNKNOWN_ERROR)) {
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, addMessage));
+                    } else {
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, addMessage));
+                    }
                 } else {
-                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, addMessage));
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
                 }
-            } else {
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
+            } catch (JSONException e) {
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
             }
-        } catch (JSONException e) {
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+        } else {
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
         }
     }
 
@@ -393,21 +394,25 @@ public class QUsersCordova extends CordovaPlugin {
      * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
      */
     private void removeLabelFromDatabase(JSONArray args) {
-        try {
-            String sourceId = args.getString(0);
-            boolean sourceIdIsValid = ValidationUtil.nullOrEmptyChecker(sourceId);
-            if (sourceIdIsValid) {
-                String removeMessage = groupAccessor.removeLabelFromData(sourceId);
-                if (removeMessage.equals(SUCCESS)) {
-                    callbackContext.success();
+        if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
+            try {
+                String sourceId = args.getString(0);
+                boolean sourceIdIsValid = ValidationUtil.nullOrEmptyChecker(sourceId);
+                if (sourceIdIsValid) {
+                    String removeMessage = groupAccessor.removeLabelFromData(sourceId);
+                    if (removeMessage.equals(SUCCESS)) {
+                        callbackContext.success();
+                    } else {
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, removeMessage));
+                    }
                 } else {
-                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, removeMessage));
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
                 }
-            } else {
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
+            } catch (JSONException e) {
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
             }
-        } catch (JSONException e) {
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+        } else {
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
         }
     }
 
@@ -417,34 +422,38 @@ public class QUsersCordova extends CordovaPlugin {
      * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
      */
     private void saveOrEditLabel(JSONArray args) {
-        try {
-            String sourceId = args.getString(0);
-            boolean sourceIdIsValid = ValidationUtil.nullOrEmptyChecker(sourceId);
-            String title = args.getString(1);
-            boolean titleIsValid = ValidationUtil.nullOrEmptyChecker(title);
-            if (sourceIdIsValid && titleIsValid) {
-                if (sourceId.equals("-1")) {
-                    //for not specified sourceId (need to add new label)
-                    String addMessage = groupAccessor.addLabelToDatabase(title);
-                    if (addMessage.equals(SUCCESS)) {
-                        callbackContext.success();
+        if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
+            try {
+                String sourceId = args.getString(0);
+                boolean sourceIdIsValid = ValidationUtil.nullOrEmptyChecker(sourceId);
+                String title = args.getString(1);
+                boolean titleIsValid = ValidationUtil.nullOrEmptyChecker(title);
+                if (sourceIdIsValid && titleIsValid) {
+                    if (sourceId.equals("-1")) {
+                        //for not specified sourceId (need to add new label)
+                        String addMessage = groupAccessor.addLabelToDatabase(title);
+                        if (addMessage.equals(SUCCESS)) {
+                            callbackContext.success();
+                        } else {
+                            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, addMessage));
+                        }
                     } else {
-                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, addMessage));
+                        //for specified sourceId (need to edit existing one)
+                        String editMessage = groupAccessor.editLabelInDatabase(sourceId, title);
+                        if (editMessage.equals(SUCCESS)) {
+                            callbackContext.success();
+                        } else {
+                            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, editMessage));
+                        }
                     }
                 } else {
-                    //for specified sourceId (need to edit existing one)
-                    String editMessage = groupAccessor.editLabelInDatabase(sourceId, title);
-                    if (editMessage.equals(SUCCESS)) {
-                        callbackContext.success();
-                    } else {
-                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, editMessage));
-                    }
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
                 }
-            } else {
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
+            } catch (JSONException e) {
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
             }
-        } catch (JSONException e) {
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+        } else {
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
         }
     }
 
@@ -454,35 +463,39 @@ public class QUsersCordova extends CordovaPlugin {
      * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
      */
     private void setLabelListForContact(JSONArray args) {
-        try {
-            String contactId = args.getString(0);
-            boolean contactIdIsValid = ValidationUtil.canCastToInt(contactId);
-            JSONArray labelIds = args.getJSONArray(1);
-            boolean idsAreValid = true;
-            if (labelIds.length() != 0) {     //empty array means all non-system-related labels removal.
-                for (int i = 0; i < labelIds.length(); i++) {
-                    if (!ValidationUtil.nullOrEmptyChecker(labelIds.getString(i))) {
-                        idsAreValid = false;
+        if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
+            try {
+                String contactId = args.getString(0);
+                boolean contactIdIsValid = ValidationUtil.canCastToInt(contactId);
+                JSONArray labelIds = args.getJSONArray(1);
+                boolean idsAreValid = true;
+                if (labelIds.length() != 0) {     //empty array means all non-system-related labels removal.
+                    for (int i = 0; i < labelIds.length(); i++) {
+                        if (!ValidationUtil.nullOrEmptyChecker(labelIds.getString(i))) {
+                            idsAreValid = false;
+                        }
                     }
                 }
-            }
-            if (contactIdIsValid && idsAreValid) {
-                String[] idArray = new String[labelIds.length()];
-                for (int i = 0; i < labelIds.length(); i++) {
-                   idArray[i] = labelIds.getString(i);
-                }
-                String removeMessage = groupAccessor.setLabelListForContact(contactId, idArray);
-                if (removeMessage.equals(SUCCESS)) {
-                    callbackContext.success();
+                if (contactIdIsValid && idsAreValid) {
+                    String[] idArray = new String[labelIds.length()];
+                    for (int i = 0; i < labelIds.length(); i++) {
+                        idArray[i] = labelIds.getString(i);
+                    }
+                    String removeMessage = groupAccessor.setLabelListForContact(contactId, idArray);
+                    if (removeMessage.equals(SUCCESS)) {
+                        callbackContext.success();
+                    } else {
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, removeMessage));
+                    }
                 } else {
-                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, removeMessage));
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
                 }
-            } else {
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
+            } catch (JSONException e) {
+                e.printStackTrace();
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+        } else {
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
         }
     }
 
@@ -492,37 +505,41 @@ public class QUsersCordova extends CordovaPlugin {
      * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
      */
     private void getLabelsForContact(JSONArray args) {
-        try {
-            JSONArray contactIds = args.getJSONArray(0);
-            boolean contactIdIsValid = true;
-            for (int i = 0; i < contactIds.length(); i++) {
-                if (!ValidationUtil.canCastToInt(contactIds.getString(i))) {
-                    contactIdIsValid = false;
-                }
-            }
-            if (contactIdIsValid && !ValidationUtil.isArrayEmpty(contactIds)) {
-                List<String> contactIdList = new ArrayList<>();
+        if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
+            try {
+                JSONArray contactIds = args.getJSONArray(0);
+                boolean contactIdIsValid = true;
                 for (int i = 0; i < contactIds.length(); i++) {
-                    contactIdList.add(contactIds.getString(i));
+                    if (!ValidationUtil.canCastToInt(contactIds.getString(i))) {
+                        contactIdIsValid = false;
+                    }
                 }
-                boolean doUnion = args.getBoolean(1);
-                List<QbixGroup> labels = groupAccessor.getLabelsByContactIds(contactIdList, doUnion);
-                JSONArray jsonGroups = new JSONArray();
-                for (QbixGroup group :
-                        labels) {
-                    jsonGroups.put(group.toJson());
-                }
-                if (labels != null) {
-                    callbackContext.success(jsonGroups);
+                if (contactIdIsValid && !ValidationUtil.isArrayEmpty(contactIds)) {
+                    List<String> contactIdList = new ArrayList<>();
+                    for (int i = 0; i < contactIds.length(); i++) {
+                        contactIdList.add(contactIds.getString(i));
+                    }
+                    boolean doUnion = args.getBoolean(1);
+                    List<QbixGroup> labels = groupAccessor.getLabelsByContactIds(contactIdList, doUnion);
+                    JSONArray jsonGroups = new JSONArray();
+                    for (QbixGroup group :
+                            labels) {
+                        jsonGroups.put(group.toJson());
+                    }
+                    if (labels != null) {
+                        callbackContext.success(jsonGroups);
+                    } else {
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
+                    }
                 } else {
-                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
                 }
-            } else {
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
+            } catch (JSONException e) {
+                e.printStackTrace();
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+        } else {
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
         }
     }
 
@@ -539,34 +556,38 @@ public class QUsersCordova extends CordovaPlugin {
      * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
      */
     private void smart(JSONArray args) {
-        try {
-            String name = args.getString(0);
-            if (name != null
-                    && (name.equals(UNCATEGORIZED_SMART_NAME)
-                    || name.equals(BY_COMPANY_SMART_NAME)
-                    || name.equals(BY_LAST_TIME_UPDATED_SMART_NAME)
-                    || name.equals(HAS_EMAIL_SMART_NAME)
-                    || name.equals(HAS_PHONE_SMART_NAME)
-                    || name.equals(HAS_PHOTO_SMART_NAME))) {
-                String[] contacts = groupAccessor.getContactList(name);
-                if (contacts != null) {
-                    JSONObject jsonSmart = new JSONObject();
-                    jsonSmart.put("title", name);
-                    JSONArray jsonContacts = new JSONArray();
-                    for (int i = 0; i < contacts.length; i++) {
-                        jsonContacts.put(contacts[i]);
+        if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
+            try {
+                String name = args.getString(0);
+                if (name != null
+                        && (name.equals(UNCATEGORIZED_SMART_NAME)
+                        || name.equals(BY_COMPANY_SMART_NAME)
+                        || name.equals(BY_LAST_TIME_UPDATED_SMART_NAME)
+                        || name.equals(HAS_EMAIL_SMART_NAME)
+                        || name.equals(HAS_PHONE_SMART_NAME)
+                        || name.equals(HAS_PHOTO_SMART_NAME))) {
+                    String[] contacts = groupAccessor.getContactList(name);
+                    if (contacts != null) {
+                        JSONObject jsonSmart = new JSONObject();
+                        jsonSmart.put("title", name);
+                        JSONArray jsonContacts = new JSONArray();
+                        for (int i = 0; i < contacts.length; i++) {
+                            jsonContacts.put(contacts[i]);
+                        }
+                        jsonSmart.put("contactIds", jsonContacts);
+                        callbackContext.success(jsonSmart);
+                    } else {
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
                     }
-                    jsonSmart.put("contactIds", jsonContacts);
-                    callbackContext.success(jsonSmart);
                 } else {
-                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
                 }
-            } else {
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
+            } catch (JSONException e) {
+                e.printStackTrace();
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+        } else {
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
         }
     }
 
@@ -589,7 +610,7 @@ public class QUsersCordova extends CordovaPlugin {
             case REMOVE_CONTACT_FROM_LABEL_REQ_CODE:
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
-                            removeContactFromLabel(executeArgs);
+                        removeContactFromLabel(executeArgs);
                     }
                 });
                 break;
@@ -610,7 +631,7 @@ public class QUsersCordova extends CordovaPlugin {
             case LABELS_BY_SOURCE_ID_REQ_CODE:
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
-                            getLabels(executeArgs);
+                        getLabels(executeArgs);
                     }
                 });
                 break;
