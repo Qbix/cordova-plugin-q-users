@@ -4,7 +4,6 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
-import android.content.Context;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.os.RemoteException;
@@ -12,11 +11,6 @@ import android.provider.ContactsContract;
 import android.util.Log;
 
 import org.apache.cordova.CordovaInterface;
-
-import com.q.users.cordova.plugin.AccNameGroup;
-import com.q.users.cordova.plugin.QbixGroup;
-import com.q.users.cordova.plugin.RawIdLabelId;
-import com.q.users.cordova.plugin.GroupHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -240,7 +234,7 @@ public class GroupAccessor {
                         }
 
                     }
-                    errorMessage+= " Label "+sourceId+" is not shared with the contact.";
+                    errorMessage += " Label " + sourceId + " is not shared with the contact.";
                     return errorMessage;
                 }
 
@@ -516,7 +510,7 @@ public class GroupAccessor {
                 }
 
                 if (!failedList.isEmpty()) {
-                    String errorMessage = "Failed to add following labels to contact "+contactId+": ";
+                    String errorMessage = "Failed to add following labels to contact " + contactId + ": ";
                     for (int i = 0; i < failedList.size(); i++) {
                         errorMessage += failedList.get(i);
                         if (i != (failedList.size() - 1)) {
@@ -525,7 +519,7 @@ public class GroupAccessor {
                             errorMessage += ".";
                         }
                     }
-                    errorMessage+= " Contact "+contactId+" is not shared with the labels.";
+                    errorMessage += " Contact " + contactId + " is not shared with the labels.";
                     return errorMessage;
                 }
 
@@ -674,5 +668,59 @@ public class GroupAccessor {
         }
         cursor.close();
         return accountContactIdsPairs;
+    }
+
+    /**
+     * Gets all accounts for given sourceIds and binds label ids to them.
+     * Each account name ({@link AccountLabelIds#accName}) and account type ({@link AccountLabelIds#accType})
+     * pairs will be unique in returning list and will have a list of label ids ({@link AccountLabelIds#sourceIds})
+     * which belongs to that account.
+     *
+     * @param sourceIds ContactIds which account names wanted to be known
+     * @return list of {@link AccountLabelIds} POJO
+     */
+    protected List<AccountLabelIds> getAccountSourceIdsPairs(String[] sourceIds) {
+        List<AccountLabelIds> accountLabelIdsPairs = new ArrayList<>();
+        List<String> existingAccounts = new ArrayList<>();
+        List<String> existingSourceIds = new ArrayList<>();
+        Cursor cursor = app.getActivity().getContentResolver().query(ContactsContract.Groups.CONTENT_URI,
+                new String[]{
+                        ContactsContract.Groups.SOURCE_ID,
+                        ContactsContract.Groups.ACCOUNT_NAME,
+                        ContactsContract.Groups.ACCOUNT_TYPE
+                },
+                ContactsContract.Groups.SOURCE_ID + GroupHelper.getSuffix(sourceIds.length),
+                sourceIds,
+                null);
+        while (cursor.moveToNext()) {
+            String accName = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_NAME));
+            String accType = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_TYPE));
+            String sourceId = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID));
+            if (!existingSourceIds.contains(sourceId)) {
+                existingSourceIds.add(sourceId);
+                if (existingAccounts.contains(accName + "/" + accType)) {
+                    boolean exists = false;   //for testing
+                    for (int i = 0; i < accountLabelIdsPairs.size(); i++) {
+                        if (accountLabelIdsPairs.get(i).accName.equals(accName)) {
+                            accountLabelIdsPairs.get(i).sourceIds.add(sourceId);
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists) {
+                        Log.d("wrong_logic_checker", accName + " is not existing");
+                    }
+                } else {
+                    AccountLabelIds accountContactIdsPair = new AccountLabelIds(accName, accType);
+                    accountContactIdsPair.sourceIds.add(sourceId);
+                    accountLabelIdsPairs.add(accountContactIdsPair);
+                    existingAccounts.add(accName + "/" + accType);
+                }
+            } else {
+                Log.d("duplicate_checker", sourceId + "is duplicate");
+            }
+        }
+        cursor.close();
+        return accountLabelIdsPairs;
     }
 }

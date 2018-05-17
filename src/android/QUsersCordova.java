@@ -29,6 +29,7 @@ public class QUsersCordova extends CordovaPlugin {
     private final String GET_NATIVE_LABEL_FOR_CONTACT = "forContacts";
     private final String SMART = "smart";
     private final String CHECK_CONTACTS_ACCOUNT = "checkContactsAccount";
+    private final String CHECK_LABELS_ACCOUNT = "checkLabelsAccount";
 
     private final String READ = Manifest.permission.READ_CONTACTS;
     private final String WRITE = Manifest.permission.WRITE_CONTACTS;
@@ -45,6 +46,7 @@ public class QUsersCordova extends CordovaPlugin {
     private final int GET_NATIVE_LABEL_FOR_CONTACT_REQ_CODE = 15;
     private final int SMART_REQ_CODE = 16;
     private final int CHECK_CONTACTS_ACCOUNT_REQ_CODE = 17;
+    private final int CHECK_LABELS_ACCOUNT_REQ_CODE = 18;
 
     //smart names
     /**
@@ -250,6 +252,18 @@ public class QUsersCordova extends CordovaPlugin {
                 });
             } else {
                 getDoublePermission(CHECK_CONTACTS_ACCOUNT_REQ_CODE, READ, ACCOUNTS);
+            }
+
+            return true;
+        } else if (action.equals(CHECK_LABELS_ACCOUNT)) {
+            if (PermissionHelper.hasPermission(this, READ) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
+                this.cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                        checkLabelsAccount(executeArgs);
+                    }
+                });
+            } else {
+                getDoublePermission(CHECK_LABELS_ACCOUNT_REQ_CODE, READ, ACCOUNTS);
             }
 
             return true;
@@ -638,6 +652,45 @@ public class QUsersCordova extends CordovaPlugin {
         }
     }
 
+    /**
+     * Binds given labels' ids to their account's name and type.
+     *
+     * @param args Arguments from {@link #execute(String, JSONArray, CallbackContext)} method
+     */
+    private void checkLabelsAccount(JSONArray args) {
+        if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
+            try {
+                JSONArray sourceIds = args.getJSONArray(0);
+                boolean contactIdIsValid = true;
+                for (int i = 0; i < sourceIds.length(); i++) {
+                    if (!ValidationUtil.nullOrEmptyChecker(sourceIds.getString(i))) {
+                        contactIdIsValid = false;
+                    }
+                }
+                if (contactIdIsValid && !ValidationUtil.isArrayEmpty(sourceIds)) {
+                    String[] idsArray = new String[sourceIds.length()];
+                    for (int i = 0; i < sourceIds.length(); i++) {
+                        idsArray[i] = sourceIds.getString(i);
+                    }
+                    String[] filteredArray = ValidationUtil.cleanFromDuplicates(idsArray);
+                    List<AccountLabelIds> accountLabelIdsPairs = groupAccessor.getAccountSourceIdsPairs(filteredArray);
+                    JSONArray jsonAccNameLabels = new JSONArray();
+                    for (int i = 0; i < accountLabelIdsPairs.size(); i++) {
+                        jsonAccNameLabels.put(accountLabelIdsPairs.get(i).toJson());
+                    }
+                    callbackContext.success(jsonAccNameLabels);
+                } else {
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, INVALID_DATA_ERROR));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
+            }
+        } else {
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
+        }
+    }
+
     public void onRequestPermissionResult(int requestCode, String[] permissions,
                                           int[] grantResults) {
         for (int r : grantResults) {
@@ -714,6 +767,13 @@ public class QUsersCordova extends CordovaPlugin {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         checkContactsAccount(executeArgs);
+                    }
+                });
+                break;
+            case CHECK_LABELS_ACCOUNT_REQ_CODE:
+                this.cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
+                        checkLabelsAccount(executeArgs);
                     }
                 });
                 break;

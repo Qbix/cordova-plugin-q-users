@@ -24,6 +24,7 @@ contact data.
 
 * __`QbixGroup`__
 * __`AccountContactIds`__
+* __`AccountLabelIds`__
 
 ## QbixGroup
 
@@ -82,7 +83,30 @@ that belongs to that account.
   "contactIds": [
     15,
     55,
-    96,
+    96
+  ]
+}
+```
+
+## AccountLabelIds
+
+The `AccountLabelIds` object represents an account information (name, type) and list of label `id`s (source_id) from givel list (See in __checkLabelsAccount__ method)
+that belongs to that account. If multiple accounts have the same `id`, then it will be assigned to the first account in device's databese order.
+
+### Properties
+
+- __accountName__: The name of account. [String]
+- __accountType__: The type of account. [String]
+- __labelIds__: The list of label ids, which belongs to the account (not all, only from given list). [String]
+
+```js
+{
+  "accountName": "account.name@gmail.com",
+  "accountType": "com.google",
+  "labelIds": [
+    "e",
+    "797fe7510dd13f31",
+    "ad615688bac8449"
   ]
 }
 ```
@@ -100,6 +124,7 @@ that belongs to that account.
 * `setForContact`
 * `smart`
 * `checkContactsAccount`
+* `checkLabelsAccount`
 
 ## getAll
 Gets all labels asynchronously. Returns JSON array of `QbixGroup` object. Property names are the keys.
@@ -252,4 +277,18 @@ Binds given `contactId`s to their account's name and type. Returns JSON array of
 __Example__:
 ```js
 var accountContactIdsList = Q.Users.Cordova.Labels.checkContactsAccount([11,25,47],function(data){console.log(data);}, function(err){console.log(err)})
+```
+
+## checkContactsAccount
+Binds given label `id`s to their account's name and type. Returns JSON array of `AccountLabelIds` object. Property names are the keys.
+
+### Parameters
+- __labelIds__: List of label `id`s which accounts' information wanted to be returned. [JSON array of Strings] 
+
+### Supporded platforms
+- __Android__
+
+__Example__:
+```js
+var accountLabelIdsList = Q.Users.Cordova.Labels.checkLabelsAccount(["d","65935bb78e39336d","3f336c768918b9dd"],function(data){console.log(data);}, function(err){console.log(err)})
 ```
