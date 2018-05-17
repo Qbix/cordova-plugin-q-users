@@ -627,4 +627,52 @@ public class GroupAccessor {
         }
         return contactIds;
     }
+
+    /**
+     * Gets all accounts for given contactIds and binds contact ids to them.
+     * Each account name ({@link AccountContactIds#accName}) and account type ({@link AccountContactIds#accType})
+     * pairs will be unique in returning list and will have a list of contact ids ({@link AccountContactIds#contactIds})
+     * which belongs to that account.
+     *
+     * @param contactIds ContactIds which account names wanted to be known
+     * @return list of {@link AccountContactIds} POJO
+     */
+    protected List<AccountContactIds> getAccountContactIdsPairs(String[] contactIds) {
+        List<AccountContactIds> accountContactIdsPairs = new ArrayList<>();
+        List<String> existingAccounts = new ArrayList<>();
+        Cursor cursor = app.getActivity().getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
+                new String[]{
+                        ContactsContract.RawContacts.CONTACT_ID,
+                        ContactsContract.RawContacts.ACCOUNT_NAME,
+                        ContactsContract.RawContacts.ACCOUNT_TYPE
+                },
+                ContactsContract.RawContacts.CONTACT_ID + GroupHelper.getSuffix(contactIds.length),
+                contactIds,
+                null);
+        while (cursor.moveToNext()) {
+            String accName = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME));
+            String accType = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_TYPE));
+            String contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.CONTACT_ID));
+            if (existingAccounts.contains(accName + "/" + accType)) {
+                boolean exists = false;   //for testing
+                for (int i = 0; i < accountContactIdsPairs.size(); i++) {
+                    if (accountContactIdsPairs.get(i).accName.equals(accName)) {
+                        accountContactIdsPairs.get(i).contactIds.add(contactId);
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    Log.d("wrong_logic_checker", accName + " is not existing");
+                }
+            } else {
+                AccountContactIds accountContactIdsPair = new AccountContactIds(accName, accType);
+                accountContactIdsPair.contactIds.add(contactId);
+                accountContactIdsPairs.add(accountContactIdsPair);
+                existingAccounts.add(accName + "/" + accType);
+            }
+        }
+        cursor.close();
+        return accountContactIdsPairs;
+    }
 }

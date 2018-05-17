@@ -23,6 +23,7 @@ contact data.
 # Objects
 
 * __`QbixGroup`__
+* __`AccountContactIds`__
 
 ## QbixGroup
 
@@ -63,6 +64,30 @@ The `QbixGroup` object represents a users label.
 }
 ```
 
+## AccountContactIds
+
+The `AccountContactIds` object represents an account information (name, type) and list of `contactId`s from givel list (See in __checkContactsAccount__ method)
+that belongs to that account.
+
+### Properties
+
+- __accountName__: The name of account. [String]
+- __accountType__: The type of account. [String]
+- __contactIds__: The list of contact ids, which belongs to the account (not all, only from given list). [Integer]
+
+```js
+{
+  "accountName": "account.name@gmail.com",
+  "accountType": "com.google",
+  "contactIds": [
+    15,
+    55,
+    96,
+  ]
+}
+```
+
+
 # Methods
 
 * `getAll`
@@ -74,6 +99,7 @@ The `QbixGroup` object represents a users label.
 * `removeContact`
 * `setForContact`
 * `smart`
+* `checkContactsAccount`
 
 ## getAll
 Gets all labels asynchronously. Returns JSON array of `QbixGroup` object. Property names are the keys.
@@ -212,4 +238,18 @@ Gets contacts' id list depending on given `smartName`. [String]
 __Example__:
 ```js
 var photoContacts = Q.Users.Cordova.Labels.smart("hasPhoto",function(data){console.log(data);}, function(err){console.log(err)})
+```
+
+## checkContactsAccount
+Binds given `contactId`s to their account's name and type. Returns JSON array of `AccountContactIds` object. Property names are the keys.
+
+### Parameters
+- __contactIds__: List of `contactId`s which accounts' information wanted to be returned. [JSON array of ints] 
+
+### Supporded platforms
+- __Android__
+
+__Example__:
+```js
+var accountContactIdsList = Q.Users.Cordova.Labels.checkContactsAccount([11,25,47],function(data){console.log(data);}, function(err){console.log(err)})
 ```

@@ -44,6 +44,7 @@
     <source-file src="src/android/GroupHelper.java" target-dir="src/com/q/users/cordova/plugin/"/>
     <source-file src="src/android/RawIdTitles.java" target-dir="src/com/q/users/cordova/plugin/"/>
     <source-file src="src/android/ValidationUtil.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/AccountContactIds.java" target-dir="src/com/q/users/cordova/plugin/"/>
   </platform>
 
   <platform name="ios">
