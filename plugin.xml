@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
         id="com.q.users.cordova"
-        version="0.0.2">
+        version="0.4.0">
 
   <name>Q.Users.Cordova</name>
 
