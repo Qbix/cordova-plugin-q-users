@@ -4,7 +4,6 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
-import android.content.Context;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.os.RemoteException;
@@ -12,11 +11,6 @@ import android.provider.ContactsContract;
 import android.util.Log;
 
 import org.apache.cordova.CordovaInterface;
-
-import com.q.users.cordova.plugin.AccNameGroup;
-import com.q.users.cordova.plugin.QbixGroup;
-import com.q.users.cordova.plugin.RawIdLabelId;
-import com.q.users.cordova.plugin.GroupHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,46 +56,48 @@ public class GroupAccessor {
         List<String> sourceIds = new ArrayList<>();
         List<RawIdLabelId> rawIdLabelIds = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity());
         HashMap<String, String> rawIdContactIdPair = GroupHelper.getExistingRawIdContactIdPairs(app.getActivity());
+        List<String> systemIds = GroupHelper.getSystemIds(app.getActivity());
         while (cursor.moveToNext()) {
-            QbixGroup group = new QbixGroup();
+            if (!systemIds.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups._ID)))) {
+                QbixGroup group = new QbixGroup();
 
-            group.sourceId = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID));
-            group.title = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.TITLE));
-            group.notes = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.NOTES));
-            group.summaryCount = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.SUMMARY_COUNT));
-            group.isVisible = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.GROUP_VISIBLE)) == 0;
-            group.isDeleted = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.DELETED)) == 1;
-            group.shouldSync = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.SHOULD_SYNC)) == 1;
-            group.readOnly = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.GROUP_IS_READ_ONLY)) == 1;
-            Log.i("group_info_checker", "id: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups._ID)));
-            Log.i("group_info_checker", "source_id: " + group.sourceId);
-            Log.i("group_info_checker", "title: " + group.title);
-            Log.i("group_info_checker", "notes: " + group.notes);
-            Log.i("group_info_checker", "summary_count: " + group.summaryCount);
-            Log.i("group_info_checker", "is_visible: " + group.isVisible);
-            Log.i("group_info_checker", "deleted: " + group.isDeleted);
-            Log.i("group_info_checker", "should_sync: " + group.shouldSync);
-            Log.i("group_info_checker", "read_only: " + group.readOnly);
-            String labelId = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups._ID));
-            List<Integer> rawIds = new ArrayList<>();
-            for (int i = 0; i < rawIdLabelIds.size(); i++) {
-                if (rawIdLabelIds.get(i).labelId.equals(labelId)) {
-                    rawIds.add(Integer.valueOf(rawIdLabelIds.get(i).rawId));
+                group.sourceId = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID));
+                group.title = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.TITLE));
+                group.notes = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.NOTES));
+                group.summaryCount = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.SUMMARY_COUNT));
+                group.isVisible = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.GROUP_VISIBLE)) == 0;
+                group.isDeleted = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.DELETED)) == 1;
+                group.shouldSync = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.SHOULD_SYNC)) == 1;
+                group.readOnly = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.GROUP_IS_READ_ONLY)) == 1;
+                Log.i("group_info_checker", "id: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups._ID)));
+                Log.i("group_info_checker", "source_id: " + group.sourceId);
+                Log.i("group_info_checker", "title: " + group.title);
+                Log.i("group_info_checker", "notes: " + group.notes);
+                Log.i("group_info_checker", "summary_count: " + group.summaryCount);
+                Log.i("group_info_checker", "is_visible: " + group.isVisible);
+                Log.i("group_info_checker", "deleted: " + group.isDeleted);
+                Log.i("group_info_checker", "should_sync: " + group.shouldSync);
+                Log.i("group_info_checker", "read_only: " + group.readOnly);
+                String labelId = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups._ID));
+                List<Integer> rawIds = new ArrayList<>();
+                for (int i = 0; i < rawIdLabelIds.size(); i++) {
+                    if (rawIdLabelIds.get(i).labelId.equals(labelId)) {
+                        rawIds.add(Integer.valueOf(rawIdLabelIds.get(i).rawId));
+                    }
+                }
+                List<Integer> contactIds = GroupHelper.getContactIds(rawIdContactIdPair, rawIds);
+                if (group.sourceId != null) {
+                    if (!sourceIds.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)))) {
+                        group.contactIds = contactIds;
+                        sourceIds.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
+                        labels.add(group);
+                    } else {
+                        int index = sourceIds.indexOf(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
+                        labels.get(index).contactIds.addAll(contactIds);
+                        Log.i("group_info_checker", "group: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)) + " is existing");
+                    }
                 }
             }
-            List<Integer> contactIds = GroupHelper.getContactIds(rawIdContactIdPair, rawIds);
-            if (group.sourceId != null) {
-                if (!sourceIds.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)))) {
-                    group.contactIds = contactIds;
-                    sourceIds.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
-                    labels.add(group);
-                } else {
-                    int index = sourceIds.indexOf(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
-                    labels.get(index).contactIds.addAll(contactIds);
-                    Log.i("group_info_checker", "group: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)) + " is existing");
-                }
-            }
-
         }
         cursor.close();
         return labels;
@@ -122,8 +118,8 @@ public class GroupAccessor {
             boolean sourceIdExists = ValidationUtil.isSourceIdExisting(app.getActivity(), sourceId);
             List<String> missingContacts = ValidationUtil.getMissingContactIds(app.getActivity(), contactIds);
             if (sourceIdExists && missingContacts.isEmpty()) {
-                HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountNamePair(app.getActivity(), rawContactIds);
-                HashMap<String, String> accNameLabelId = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceId);
+                HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountPair(app.getActivity(), rawContactIds);
+                HashMap<String, String> accNameLabelId = GroupHelper.getAccountLabelIdPair(app.getActivity(), sourceId);
                 List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawContactIds);
 
                 for (int i = 0; i < rawContactIds.length; i++) {
@@ -190,8 +186,8 @@ public class GroupAccessor {
             boolean sourceIdExists = ValidationUtil.isSourceIdExisting(app.getActivity(), sourceId);
             List<String> missingContacts = ValidationUtil.getMissingContactIds(app.getActivity(), contactIds);
             if (sourceIdExists && missingContacts.isEmpty()) {
-                HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountNamePair(app.getActivity(), rawContactIds);
-                HashMap<String, String> accNameLabelId = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceId);
+                HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountPair(app.getActivity(), rawContactIds);
+                HashMap<String, String> accNameLabelId = GroupHelper.getAccountLabelIdPair(app.getActivity(), sourceId);
                 List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawContactIds);
                 List<String> failedList = new ArrayList<>();
                 for (int i = 0; i < rawContactIds.length; i++) {
@@ -220,7 +216,7 @@ public class GroupAccessor {
                     }
                 }
                 if (!failedList.isEmpty()) {
-                    String errorMessage = "Failed to add label" + sourceId + " to contact(s): ";
+                    String errorMessage = "Failed to add label " + sourceId + " to contact(s): ";
                     HashMap<String, String> rawIdContactIdPair = GroupHelper.getExistingRawIdContactIdPairs(app.getActivity());
                     List<String> convertedContactIds = new ArrayList<>();
                     for (int i = 0; i < failedList.size(); i++) {
@@ -238,7 +234,7 @@ public class GroupAccessor {
                         }
 
                     }
-                    errorMessage+= " Label "+sourceId+" is not shared with the contact.";
+                    errorMessage += " Label " + sourceId + " is not shared with the contact.";
                     return errorMessage;
                 }
 
@@ -284,23 +280,28 @@ public class GroupAccessor {
                 new ArrayList<>();
         boolean sourceIdExists = ValidationUtil.isSourceIdExisting(app.getActivity(), sourceId);
         if (sourceIdExists) {
-            ops.add(ContentProviderOperation.newDelete(ContactsContract.Groups.CONTENT_URI)
-                    .withSelection(ContactsContract.Groups.SOURCE_ID + "=?", new String[]{sourceId})
-                    .withYieldAllowed(true)
-                    .build());
-            try {
-                ContentProviderResult[] result = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-                Log.d("delete_checker", "removeLabelFromData: " + result.toString());
-            } catch (RemoteException e) {
-                e.printStackTrace();
-                return e.getMessage();
-            } catch (OperationApplicationException e) {
-                Log.d("error_tag", e.getMessage());
-                e.printStackTrace();
-                return e.getMessage();
+            List<String> readOnlyIds = GroupHelper.getReadOnlyIds(app.getActivity());
+            if (!readOnlyIds.contains(sourceId)) {
+                ops.add(ContentProviderOperation.newDelete(ContactsContract.Groups.CONTENT_URI)
+                        .withSelection(ContactsContract.Groups.SOURCE_ID + "=?", new String[]{sourceId})
+                        .withYieldAllowed(true)
+                        .build());
+                try {
+                    ContentProviderResult[] result = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+                    Log.d("delete_checker", "removeLabelFromData: " + result.toString());
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                    return e.getMessage();
+                } catch (OperationApplicationException e) {
+                    Log.d("error_tag", e.getMessage());
+                    e.printStackTrace();
+                    return e.getMessage();
+                }
+                GroupHelper.requestSyncNow(app.getActivity());
+                return QUsersCordova.SUCCESS;
+            } else {
+                return QUsersCordova.READ_ONLY_LABEL_ERROR;
             }
-            GroupHelper.requestSyncNow(app.getActivity());
-            return QUsersCordova.SUCCESS;
         } else {
             return QUsersCordova.MISSING_LABEL_ERROR;
         }
@@ -322,6 +323,7 @@ public class GroupAccessor {
                                 ContactsContract.Groups.SOURCE_ID,
                                 ContactsContract.Groups.TITLE,
                                 ContactsContract.Groups.ACCOUNT_NAME,
+                                ContactsContract.Groups.ACCOUNT_TYPE,
                                 ContactsContract.Groups.NOTES,
                                 ContactsContract.Groups.SUMMARY_COUNT,
                                 ContactsContract.Groups.GROUP_VISIBLE,
@@ -340,7 +342,8 @@ public class GroupAccessor {
                     AccNameGroup group = new AccNameGroup();
                     group.sourceId = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID));
                     group.title = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.TITLE));
-                    group.accountName = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_NAME));
+                    group.account = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_NAME))+"/"
+                            +groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_TYPE));
                     group.summaryCount = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.SUMMARY_COUNT));
                     group.notes = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.NOTES));
                     group.isVisible = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.GROUP_VISIBLE)) == 0;
@@ -359,10 +362,10 @@ public class GroupAccessor {
                         GetRealGroup:
                         {
                             for (int j = 0; j < accounts.length; j++) {
-                                if (accNameGroup.accountName.equals(accounts[j].name)) {
+                                if (accNameGroup.account.equals(accounts[j].name+"/"+accounts[j].type)) {
                                     for (int k = 0; k < accNameGroups.size(); k++) {
                                         AccNameGroup realGroup = accNameGroups.get(k);
-                                        if (realGroup.sourceId.equals(accNameGroup.sourceId) && realGroup.accountName.equals(accNameGroup.accountName)) {
+                                        if (realGroup.sourceId.equals(accNameGroup.sourceId) && realGroup.account.equals(accNameGroup.account)) {
                                             realGroup.contactIds = GroupHelper.getContactIds(rawIdContactIdPair,
                                                     GroupHelper.getRawIdsBySourceId(app.getActivity(), realGroup.sourceId));
                                             finalGroups.add(realGroup);
@@ -471,7 +474,7 @@ public class GroupAccessor {
                 ArrayList<ContentProviderOperation> ops = new ArrayList<>();
                 List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawIds);
                 List<String> systemLabelIds = GroupHelper.getSystemIds(app.getActivity());
-                String accountName = GroupHelper.getRawContactIdAccountName(app.getActivity(), rawIds[0]);
+                String accountName = GroupHelper.getRawContactIdAccount(app.getActivity(), rawIds[0]);
                 for (int i = 0; i < rawIds.length; i++) {
                     for (int j = 0; j < existingLabels.size(); j++) {
                         if (existingLabels.get(j).rawId.equals(rawIds[i]) && !systemLabelIds.contains(existingLabels.get(j).labelId)) {
@@ -489,7 +492,7 @@ public class GroupAccessor {
                 List<String> failedList = new ArrayList<>();
                 if (!sourceIdList.isEmpty()) {
                     for (int i = 0; i < sourceIdList.size(); i++) {
-                        HashMap<String, String> accNameLabelIdPair = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceIdList.get(i));
+                        HashMap<String, String> accNameLabelIdPair = GroupHelper.getAccountLabelIdPair(app.getActivity(), sourceIdList.get(i));
                         String labelId = accNameLabelIdPair.get(accountName);
                         if (labelId != null) {
                             for (int j = 0; j < rawIds.length; j++) {
@@ -509,7 +512,7 @@ public class GroupAccessor {
                 }
 
                 if (!failedList.isEmpty()) {
-                    String errorMessage = "Failed to add following labels to contact "+contactId+": ";
+                    String errorMessage = "Failed to add following labels to contact " + contactId + ": ";
                     for (int i = 0; i < failedList.size(); i++) {
                         errorMessage += failedList.get(i);
                         if (i != (failedList.size() - 1)) {
@@ -518,7 +521,7 @@ public class GroupAccessor {
                             errorMessage += ".";
                         }
                     }
-                    errorMessage+= " Contact "+contactId+" is not shared with the labels.";
+                    errorMessage += " Contact " + contactId + " is not shared with the labels.";
                     return errorMessage;
                 }
 
@@ -619,5 +622,107 @@ public class GroupAccessor {
                 break;
         }
         return contactIds;
+    }
+
+    /**
+     * Gets all accounts for given contactIds and binds contact ids to them.
+     * Each account name ({@link AccountContactIds#accName}) and account type ({@link AccountContactIds#accType})
+     * pairs will be unique in returning list and will have a list of contact ids ({@link AccountContactIds#contactIds})
+     * which belongs to that account.
+     *
+     * @param contactIds ContactIds which account names wanted to be known
+     * @return list of {@link AccountContactIds} POJO
+     */
+    protected List<AccountContactIds> getAccountContactIdsPairs(String[] contactIds) {
+        List<AccountContactIds> accountContactIdsPairs = new ArrayList<>();
+        List<String> existingAccounts = new ArrayList<>();
+        Cursor cursor = app.getActivity().getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
+                new String[]{
+                        ContactsContract.RawContacts.CONTACT_ID,
+                        ContactsContract.RawContacts.ACCOUNT_NAME,
+                        ContactsContract.RawContacts.ACCOUNT_TYPE
+                },
+                ContactsContract.RawContacts.CONTACT_ID + GroupHelper.getSuffix(contactIds.length),
+                contactIds,
+                null);
+        while (cursor.moveToNext()) {
+            String accName = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME));
+            String accType = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_TYPE));
+            String contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.CONTACT_ID));
+            if (existingAccounts.contains(accName + "/" + accType)) {
+                boolean exists = false;   //for testing
+                for (int i = 0; i < accountContactIdsPairs.size(); i++) {
+                    if (accountContactIdsPairs.get(i).accName.equals(accName)) {
+                        accountContactIdsPairs.get(i).contactIds.add(contactId);
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    Log.d("wrong_logic_checker", accName + " is not existing");
+                }
+            } else {
+                AccountContactIds accountContactIdsPair = new AccountContactIds(accName, accType);
+                accountContactIdsPair.contactIds.add(contactId);
+                accountContactIdsPairs.add(accountContactIdsPair);
+                existingAccounts.add(accName + "/" + accType);
+            }
+        }
+        cursor.close();
+        return accountContactIdsPairs;
+    }
+
+    /**
+     * Gets all accounts for given sourceIds and binds label ids to them.
+     * Each account name ({@link AccountLabelIds#accName}) and account type ({@link AccountLabelIds#accType})
+     * pairs will be unique in returning list and will have a list of label ids ({@link AccountLabelIds#sourceIds})
+     * which belongs to that account.
+     *
+     * @param sourceIds ContactIds which account names wanted to be known
+     * @return list of {@link AccountLabelIds} POJO
+     */
+    protected List<AccountLabelIds> getAccountSourceIdsPairs(String[] sourceIds) {
+        List<AccountLabelIds> accountLabelIdsPairs = new ArrayList<>();
+        List<String> existingAccounts = new ArrayList<>();
+        List<String> existingSourceIds = new ArrayList<>();
+        Cursor cursor = app.getActivity().getContentResolver().query(ContactsContract.Groups.CONTENT_URI,
+                new String[]{
+                        ContactsContract.Groups.SOURCE_ID,
+                        ContactsContract.Groups.ACCOUNT_NAME,
+                        ContactsContract.Groups.ACCOUNT_TYPE
+                },
+                ContactsContract.Groups.SOURCE_ID + GroupHelper.getSuffix(sourceIds.length),
+                sourceIds,
+                null);
+        while (cursor.moveToNext()) {
+            String accName = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_NAME));
+            String accType = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_TYPE));
+            String sourceId = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID));
+            if (!existingSourceIds.contains(sourceId)) {
+                existingSourceIds.add(sourceId);
+                if (existingAccounts.contains(accName + "/" + accType)) {
+                    boolean exists = false;   //for testing
+                    for (int i = 0; i < accountLabelIdsPairs.size(); i++) {
+                        if (accountLabelIdsPairs.get(i).accName.equals(accName)) {
+                            accountLabelIdsPairs.get(i).sourceIds.add(sourceId);
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists) {
+                        Log.d("wrong_logic_checker", accName + " is not existing");
+                    }
+                } else {
+                    AccountLabelIds accountContactIdsPair = new AccountLabelIds(accName, accType);
+                    accountContactIdsPair.sourceIds.add(sourceId);
+                    accountLabelIdsPairs.add(accountContactIdsPair);
+                    existingAccounts.add(accName + "/" + accType);
+                }
+            } else {
+                Log.d("duplicate_checker", sourceId + "is duplicate");
+            }
+        }
+        cursor.close();
+        return accountLabelIdsPairs;
     }
 }
