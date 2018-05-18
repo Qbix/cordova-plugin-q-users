@@ -115,6 +115,34 @@ var Labels = {
      */
     setForContact: function(contactId, labelIds, successCallback, errorCallback) {
         this.exec("setForContact", [contactId, labelIds], successCallback, errorCallback);
+    },
+    /**
+     * Receive information about contacts owners -- Android denied to add contact from one owner to another owner label.
+     * @param {array} contactIds
+     * @param onSuccess - you receive array wich have list of account-owners with own contact ids 
+     * [{
+     *  "accountName": "account.name@gmail.com",
+     *  "accountType": "com.google",
+     *  "contactIds": <array of contact ids>
+     * }]
+     * @param onFailure - gets error code and list of contactIds which were not added
+     */
+    checkContactsAccount: function(contactIds, successCallback, errorCallback) {
+        this.exec("checkContactsAccount", [contactId], successCallback, errorCallback);
+    },
+    /**
+     * Receive information about contacts owners -- Android denied to add contact from one owner to another owner label.
+     * @param {array} labelIds
+     * @param onSuccess - you receive array wich have list of account-owners with own contact ids 
+     * [{
+     *  "accountName": "account.name@gmail.com",
+     *  "accountType": "com.google",
+     *  "contactIds": <array of label ids>
+     * }]
+     * @param onFailure - gets error code and list of contactIds which were not added
+     */
+    checkLabelsAccount: function(labelIds, successCallback, errorCallback) {
+        this.exec("checkLabelsAccount", [labelIds], successCallback, errorCallback);
     }
 }
 
