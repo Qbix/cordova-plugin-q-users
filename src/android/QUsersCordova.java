@@ -282,11 +282,7 @@ public class QUsersCordova extends CordovaPlugin {
                     labels) {
                 jsonGroups.put(group.toJson());
             }
-            if (labels != null) {
-                callbackContext.success(jsonGroups);
-            } else {
-                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, UNKNOWN_ERROR));
-            }
+            callbackContext.success(jsonGroups);
         } else {
             this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, NO_ACCOUNT_ERROR));
         }
@@ -340,8 +336,8 @@ public class QUsersCordova extends CordovaPlugin {
     private void removeContactFromLabel(JSONArray args) {
         if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
             try {
-                String labelId = args.getString(0);
-                boolean labelIdIsValid = ValidationUtil.nullOrEmptyChecker(labelId);
+                String sourceId = args.getString(0);
+                boolean sourceIdIsValid = ValidationUtil.nullOrEmptyChecker(sourceId);
                 JSONArray contactIds = args.getJSONArray(1);
                 boolean idsAreValid = true;
                 for (int i = 0; i < contactIds.length(); i++) {
@@ -349,13 +345,13 @@ public class QUsersCordova extends CordovaPlugin {
                         idsAreValid = false;
                     }
                 }
-                if (labelIdIsValid && idsAreValid && !ValidationUtil.isArrayEmpty(contactIds)) {
+                if (sourceIdIsValid && idsAreValid && !ValidationUtil.isArrayEmpty(contactIds)) {
                     String[] idArray = new String[contactIds.length()];
                     for (int i = 0; i < contactIds.length(); i++) {
                         idArray[i] = contactIds.getString(i);
                     }
                     String[] filteredArray = ValidationUtil.cleanFromDuplicates(idArray);
-                    String removeMessage = groupAccessor.removeLabelFromContacts(labelId, filteredArray);
+                    String removeMessage = groupAccessor.removeLabelFromContacts(sourceId, filteredArray);
                     if (removeMessage.equals(SUCCESS)) {
                         callbackContext.success();
                     } else {
@@ -380,8 +376,8 @@ public class QUsersCordova extends CordovaPlugin {
     private void addContactToLabel(JSONArray args) {
         if (ValidationUtil.doesDeviceHasAccounts(this.cordova.getActivity())) {
             try {
-                String labelId = args.getString(0);
-                boolean labelIdIsValid = ValidationUtil.nullOrEmptyChecker(labelId);
+                String sourceIdArray = args.getString(0);
+                boolean sourceIdIsValid = ValidationUtil.nullOrEmptyChecker(sourceIdArray);
                 JSONArray contactIds = args.getJSONArray(1);
                 boolean idsAreValid = true;
                 for (int i = 0; i < contactIds.length(); i++) {
@@ -389,13 +385,13 @@ public class QUsersCordova extends CordovaPlugin {
                         idsAreValid = false;
                     }
                 }
-                if (labelIdIsValid && idsAreValid && !ValidationUtil.isArrayEmpty(contactIds)) {
+                if (sourceIdIsValid && idsAreValid && !ValidationUtil.isArrayEmpty(contactIds)) {
                     String[] idArray = new String[contactIds.length()];
                     for (int i = 0; i < contactIds.length(); i++) {
                         idArray[i] = contactIds.getString(i);
                     }
                     String[] filteredArray = ValidationUtil.cleanFromDuplicates(idArray);
-                    String addMessage = groupAccessor.addLabelToContacts(labelId, filteredArray);
+                    String addMessage = groupAccessor.addLabelToContacts(sourceIdArray, filteredArray);
                     if (addMessage.equals(SUCCESS)) {
                         callbackContext.success();
                     } else {
@@ -491,19 +487,19 @@ public class QUsersCordova extends CordovaPlugin {
             try {
                 String contactId = args.getString(0);
                 boolean contactIdIsValid = ValidationUtil.canCastToInt(contactId);
-                JSONArray labelIds = args.getJSONArray(1);
+                JSONArray sourceIds = args.getJSONArray(1);
                 boolean idsAreValid = true;
-                if (labelIds.length() != 0) {     //empty array means all non-system-related labels removal.
-                    for (int i = 0; i < labelIds.length(); i++) {
-                        if (!ValidationUtil.nullOrEmptyChecker(labelIds.getString(i))) {
+                if (sourceIds.length() != 0) {     //empty array means all non-system-related labels removal.
+                    for (int i = 0; i < sourceIds.length(); i++) {
+                        if (!ValidationUtil.nullOrEmptyChecker(sourceIds.getString(i))) {
                             idsAreValid = false;
                         }
                     }
                 }
                 if (contactIdIsValid && idsAreValid) {
-                    String[] idArray = new String[labelIds.length()];
-                    for (int i = 0; i < labelIds.length(); i++) {
-                        idArray[i] = labelIds.getString(i);
+                    String[] idArray = new String[sourceIds.length()];
+                    for (int i = 0; i < sourceIds.length(); i++) {
+                        idArray[i] = sourceIds.getString(i);
                     }
                     String[] filteredArray = ValidationUtil.cleanFromDuplicates(idArray);
                     String removeMessage = groupAccessor.setLabelListForContact(contactId, filteredArray);
