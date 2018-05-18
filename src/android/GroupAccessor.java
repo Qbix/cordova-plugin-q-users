@@ -118,8 +118,8 @@ public class GroupAccessor {
             boolean sourceIdExists = ValidationUtil.isSourceIdExisting(app.getActivity(), sourceId);
             List<String> missingContacts = ValidationUtil.getMissingContactIds(app.getActivity(), contactIds);
             if (sourceIdExists && missingContacts.isEmpty()) {
-                HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountNamePair(app.getActivity(), rawContactIds);
-                HashMap<String, String> accNameLabelId = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceId);
+                HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountPair(app.getActivity(), rawContactIds);
+                HashMap<String, String> accNameLabelId = GroupHelper.getAccountLabelIdPair(app.getActivity(), sourceId);
                 List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawContactIds);
 
                 for (int i = 0; i < rawContactIds.length; i++) {
@@ -186,8 +186,8 @@ public class GroupAccessor {
             boolean sourceIdExists = ValidationUtil.isSourceIdExisting(app.getActivity(), sourceId);
             List<String> missingContacts = ValidationUtil.getMissingContactIds(app.getActivity(), contactIds);
             if (sourceIdExists && missingContacts.isEmpty()) {
-                HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountNamePair(app.getActivity(), rawContactIds);
-                HashMap<String, String> accNameLabelId = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceId);
+                HashMap<String, String> rawIdAccName = GroupHelper.getRawContactIdAccountPair(app.getActivity(), rawContactIds);
+                HashMap<String, String> accNameLabelId = GroupHelper.getAccountLabelIdPair(app.getActivity(), sourceId);
                 List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawContactIds);
                 List<String> failedList = new ArrayList<>();
                 for (int i = 0; i < rawContactIds.length; i++) {
@@ -323,6 +323,7 @@ public class GroupAccessor {
                                 ContactsContract.Groups.SOURCE_ID,
                                 ContactsContract.Groups.TITLE,
                                 ContactsContract.Groups.ACCOUNT_NAME,
+                                ContactsContract.Groups.ACCOUNT_TYPE,
                                 ContactsContract.Groups.NOTES,
                                 ContactsContract.Groups.SUMMARY_COUNT,
                                 ContactsContract.Groups.GROUP_VISIBLE,
@@ -341,7 +342,8 @@ public class GroupAccessor {
                     AccNameGroup group = new AccNameGroup();
                     group.sourceId = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID));
                     group.title = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.TITLE));
-                    group.accountName = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_NAME));
+                    group.account = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_NAME))+"/"
+                            +groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.ACCOUNT_TYPE));
                     group.summaryCount = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.SUMMARY_COUNT));
                     group.notes = groupCursor.getString(groupCursor.getColumnIndex(ContactsContract.Groups.NOTES));
                     group.isVisible = groupCursor.getInt(groupCursor.getColumnIndex(ContactsContract.Groups.GROUP_VISIBLE)) == 0;
@@ -360,10 +362,10 @@ public class GroupAccessor {
                         GetRealGroup:
                         {
                             for (int j = 0; j < accounts.length; j++) {
-                                if (accNameGroup.accountName.equals(accounts[j].name)) {
+                                if (accNameGroup.account.equals(accounts[j].name+"/"+accounts[j].type)) {
                                     for (int k = 0; k < accNameGroups.size(); k++) {
                                         AccNameGroup realGroup = accNameGroups.get(k);
-                                        if (realGroup.sourceId.equals(accNameGroup.sourceId) && realGroup.accountName.equals(accNameGroup.accountName)) {
+                                        if (realGroup.sourceId.equals(accNameGroup.sourceId) && realGroup.account.equals(accNameGroup.account)) {
                                             realGroup.contactIds = GroupHelper.getContactIds(rawIdContactIdPair,
                                                     GroupHelper.getRawIdsBySourceId(app.getActivity(), realGroup.sourceId));
                                             finalGroups.add(realGroup);
@@ -472,7 +474,7 @@ public class GroupAccessor {
                 ArrayList<ContentProviderOperation> ops = new ArrayList<>();
                 List<RawIdLabelId> existingLabels = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity(), rawIds);
                 List<String> systemLabelIds = GroupHelper.getSystemIds(app.getActivity());
-                String accountName = GroupHelper.getRawContactIdAccountName(app.getActivity(), rawIds[0]);
+                String accountName = GroupHelper.getRawContactIdAccount(app.getActivity(), rawIds[0]);
                 for (int i = 0; i < rawIds.length; i++) {
                     for (int j = 0; j < existingLabels.size(); j++) {
                         if (existingLabels.get(j).rawId.equals(rawIds[i]) && !systemLabelIds.contains(existingLabels.get(j).labelId)) {
@@ -490,7 +492,7 @@ public class GroupAccessor {
                 List<String> failedList = new ArrayList<>();
                 if (!sourceIdList.isEmpty()) {
                     for (int i = 0; i < sourceIdList.size(); i++) {
-                        HashMap<String, String> accNameLabelIdPair = GroupHelper.getAccountNameLabelIdPair(app.getActivity(), sourceIdList.get(i));
+                        HashMap<String, String> accNameLabelIdPair = GroupHelper.getAccountLabelIdPair(app.getActivity(), sourceIdList.get(i));
                         String labelId = accNameLabelIdPair.get(accountName);
                         if (labelId != null) {
                             for (int j = 0; j < rawIds.length; j++) {
