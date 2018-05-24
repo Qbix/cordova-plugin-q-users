@@ -23,6 +23,8 @@ contact data.
 # Objects
 
 * __`QbixGroup`__
+* __`AccountContactIds`__
+* __`AccountLabelIds`__
 
 ## QbixGroup
 
@@ -30,11 +32,11 @@ The `QbixGroup` object represents a users label.
 
 ### Properties
 
-- __sourceId__: The unique(some system related and default labels may have same sourceId for different accounts) id of the label. [String]
+- __id__: The source_id of the label.Some system related and default labels may have same sourceId for different accounts. [String]
 - __title__: The title of the label. [String]
 - __notes__: The notes about the label. [String]
 - __summaryCount__: Count of all contacts related to the label.
-  (If `sourceId` of the label is default or system related(repeatable),
+  (If `id` (source_id) of the label is default or system related(repeatable),
   `summaryCount` can provide wrong count(only first accounts contacts' count)) [int]
 - __isVisible__: Shows if this label is visible to any user interface. 
   (Some system related labels are not visible to users) [boolean]
@@ -45,7 +47,7 @@ The `QbixGroup` object represents a users label.
 
 ```js
 {
-  "sourceId": "4ea633c10987aff9",
+  "id": "4ea633c10987aff9",
   "title": "Colleagues",
   "notes": "Some notes about \"Colleagues\" group.",
   "summaryCount": 7,
@@ -63,6 +65,53 @@ The `QbixGroup` object represents a users label.
 }
 ```
 
+## AccountContactIds
+
+The `AccountContactIds` object represents an account information (name, type) and list of `contactId`s from givel list (See in __checkContactsAccount__ method)
+that belongs to that account.
+
+### Properties
+
+- __accountName__: The name of account. [String]
+- __accountType__: The type of account. [String]
+- __contactIds__: The list of contact ids, which belongs to the account (not all, only from given list). [Integer]
+
+```js
+{
+  "accountName": "account.name@gmail.com",
+  "accountType": "com.google",
+  "contactIds": [
+    15,
+    55,
+    96
+  ]
+}
+```
+
+## AccountLabelIds
+
+The `AccountLabelIds` object represents an account information (name, type) and list of label `id`s (source_id) from givel list (See in __checkLabelsAccount__ method)
+that belongs to that account. If multiple accounts have the same `id`, then it will be assigned to the first account in device's databese order.
+
+### Properties
+
+- __accountName__: The name of account. [String]
+- __accountType__: The type of account. [String]
+- __labelIds__: The list of label ids, which belongs to the account (not all, only from given list). [String]
+
+```js
+{
+  "accountName": "account.name@gmail.com",
+  "accountType": "com.google",
+  "labelIds": [
+    "e",
+    "797fe7510dd13f31",
+    "ad615688bac8449"
+  ]
+}
+```
+
+
 # Methods
 
 * `getAll`
@@ -74,6 +123,8 @@ The `QbixGroup` object represents a users label.
 * `removeContact`
 * `setForContact`
 * `smart`
+* `checkContactsAccount`
+* `checkLabelsAccount`
 
 ## getAll
 Gets all labels asynchronously. Returns JSON array of `QbixGroup` object. Property names are the keys.
@@ -83,14 +134,14 @@ Gets all labels asynchronously. Returns JSON array of `QbixGroup` object. Proper
 
 __Example__:
 ```js
-var allLabels = Q.Users.Cordova.Labels.getAll(function(data){console.log(data);}, function(err){console.log(err)})
+Q.Users.Cordova.Labels.getAll(function(data){console.log(data);}, function(err){console.log(err)})
 ```
 
 ## get
-Gets labels by given `sourceId`'s. Returns JSON array of `QbixGroup` object. Property names are the keys.
+Gets labels by given `id`'s. Returns JSON array of `QbixGroup` object. Property names are the keys.
 
 ### Parameters
-- __sourceIds__: `sourceId`s of labels wanted to be returned. [JSON array of Strings]
+- __ids__: `id`s of labels wanted to be returned. [JSON array of Strings]
 
 ### Supporded platforms
 - __Android__
@@ -116,11 +167,11 @@ var unionLabels = Q.Users.Cordova.Labels.forContacts([5,12,56],true,function(dat
 ```
 
 ## save
-Edits existing labels title or adds new one. If label is added (not edited), device will syncronize all accounts for generating some autogenerating information (`sourceId`, `syncAdapter`s e.t.c).
+Edits existing labels title or adds new one. If label is added (not edited), device will syncronize all accounts for generating some autogenerating information (`id`, `syncAdapter`s e.t.c).
 
 ### Parameters
 - __labelInfo__: JSON array which contains:
-	- sourceId: first item. `sourceId` of the label wanted to be edited. If it equals "-1", label will be added instead of editing existing one. [String]
+	- id: first item. `id` of the label wanted to be edited. If it equals "-1", label will be added instead of editing existing one. [String]
 	- title: second item. New title of adding/editing label. [String]
 
 ### Supporded platforms
@@ -138,7 +189,7 @@ Q.Users.Cordova.Labels.save({
 Removes existing label. 
 
 ### Parameters
-- __sourceId__: The `sourceId` of label wanted to be removed. If there is multiple labels with same `sourceId`, they all will be removed. [String] 
+- __id__: The `id` of label wanted to be removed. If there is multiple labels with same `id`, they all will be removed. [String] 
 
 ### Supporded platforms
 - __Android__
@@ -152,7 +203,7 @@ Q.Users.Cordova.Labels.remove("54ed2c5e8de2b47c",function(data){console.log(data
 Add existing label to given contact(s).
 
 ### Parameters
-- __sourceId__: The `sourceId` of the label wanted to be added. [String]
+- __id__: The `id` of the label wanted to be added. [String]
 - __contactIds__: List of `contactId`s to which label wants to be added. [JSON array of ints]
 
 ### Supporded platforms
@@ -167,7 +218,7 @@ Q.Users.Cordova.Labels.addContact("54ed2c5e8de2b47c",[5,12,25],function(data){co
 Removes label from given contact(s).
 
 ### Parameters
-- __sourceId__: The `sourceId` of the label wanted to be removed. [String]
+- __id__: The `id` of the label wanted to be removed. [String]
 - __contactIds__: List of `contactId`s from which label wants to be removed. [JSON array of ints]
 
 ### Supporded platforms
@@ -179,11 +230,11 @@ Q.Users.Cordova.Labels.removeContact("54ed2c5e8de2b47c",[5,12,25],function(data)
 ```
 
 ## setForContact
-Sets all the labels for the contact. This can be used to add or remove labels since the list of `sourceId`s is supposed to be the total set of labels for the contact, eg [ ] removes all labels.
+Sets all the labels for the contact. This can be used to add or remove labels since the list of `id`s is supposed to be the total set of labels for the contact, eg [ ] removes all labels.
 
 ### Parameters
 - __contactId__: The `contactId` of contact to which the label list wanted to be set. [int]
-- __sourceIds__: The `sourceId`s wanted to be set to contact. (Can be empty which means to remove all non-system-related labels from contact)
+- __ids__: The `id`s wanted to be set to contact. (Can be empty which means to remove all non-system-related labels from contact)
 
 ### Supporded platforms
 - __Android__
@@ -212,4 +263,32 @@ Gets contacts' id list depending on given `smartName`. [String]
 __Example__:
 ```js
 var photoContacts = Q.Users.Cordova.Labels.smart("hasPhoto",function(data){console.log(data);}, function(err){console.log(err)})
+```
+
+## checkContactsAccount
+Binds given `contactId`s to their account's name and type. Returns JSON array of `AccountContactIds` object. Property names are the keys.
+
+### Parameters
+- __contactIds__: List of `contactId`s which accounts' information wanted to be returned. [JSON array of ints] 
+
+### Supporded platforms
+- __Android__
+
+__Example__:
+```js
+var accountContactIdsList = Q.Users.Cordova.Labels.checkContactsAccount([11,25,47],function(data){console.log(data);}, function(err){console.log(err)})
+```
+
+## checkContactsAccount
+Binds given label `id`s to their account's name and type. Returns JSON array of `AccountLabelIds` object. Property names are the keys.
+
+### Parameters
+- __labelIds__: List of label `id`s which accounts' information wanted to be returned. [JSON array of Strings] 
+
+### Supporded platforms
+- __Android__
+
+__Example__:
+```js
+var accountLabelIdsList = Q.Users.Cordova.Labels.checkLabelsAccount(["d","65935bb78e39336d","3f336c768918b9dd"],function(data){console.log(data);}, function(err){console.log(err)})
 ```

@@ -188,4 +188,40 @@ public class ValidationUtil {
         Account[] accounts = accountManager.getAccounts();
         return accounts.length != 0;
     }
+
+    /**
+     * Cleans up given array from duplicate values.
+     *
+     * @param array Array of Strings wanted to be cleared
+     * @return Array of unique Strings.
+     */
+    protected static String[] cleanFromDuplicates(String[] array) {
+        List<String> filteredList = new ArrayList<>();
+        for (int i = 0; i < array.length; i++) {
+            if (!filteredList.contains(array[i])) {
+                filteredList.add(array[i]);
+            }
+        }
+        String[] filteredArray = new String[filteredList.size()];
+        for (int i = 0; i < filteredList.size(); i++) {
+            filteredArray[i] = filteredList.get(i);
+        }
+        return filteredArray;
+    }
+
+    /**
+     * Cleans up given list from duplicate values.
+     *
+     * @param list List of Strings wanted to be cleared
+     * @return List of unique Strings.
+     */
+    protected static List<String> cleanFromDuplicates(List<String> list) {
+        List<String> filteredList = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            if (!filteredList.contains(list.get(i))) {
+                filteredList.add(list.get(i));
+            }
+        }
+        return filteredList;
+    }
 }

@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-q-users",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Q.Users.Cordova plugin for working with Groups",
   "cordova": {
     "id": "cordova-plugin-q-users",
