@@ -20,7 +20,7 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         @try {
-            qAdressBook = [[QABAdressBook alloc] init];
+            qAdressBook = [[[QABAdressBook alloc] init] retain];
         } @catch(NSException *e) {
             qAdressBook = nil;
         }
@@ -40,13 +40,14 @@
 }
 
 -(ABAddressBookRef) getAddressBookRef {
-    return [self addressBook];
+    return CFRetain([self addressBook]);
 }
     
 - (instancetype)init {
     self = [super init];
     if(self) {
         [self setAddressBook:ABAddressBookCreate()];
+        CFRetain([self addressBook]);
         dispatch_async(dispatch_get_main_queue(), ^ {
             ABAddressBookRegisterExternalChangeCallback([self addressBook], addressBookChanged, (__bridge void *)self);
         });
@@ -103,7 +104,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 }
 
 -(void)dealloc {
-    CFRelease(_addressBook);
+    CFRelease([self addressBook]);
      [[NSNotificationCenter defaultCenter] removeObserver:self];
     #if !__has_feature(objc_arc)
         [super dealloc];
@@ -119,14 +120,14 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
         return NULL;
     }
     
-    return ABAddressBookGetGroupWithRecordID(_addressBook, recordId);
+    return ABAddressBookGetGroupWithRecordID([self addressBook], recordId);
 }
 
 -(ABRecordRef) getRecordForId:(ABRecordID) recordId {
     if(recordId == kABRecordInvalidID) {
         return NULL;
     }
-    return ABAddressBookGetPersonWithRecordID(_addressBook, recordId);
+    return ABAddressBookGetPersonWithRecordID([self addressBook], recordId);
 }
 
 -(QABGroup*) getGroupForRef:(ABRecordRef) groupRef {
@@ -147,7 +148,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
 -(NSArray*) getContactsWithMatchBlock:(BOOL (^)(ABRecordRef *contact)) matchBlock {
    NSMutableArray *matchedContacts = [NSMutableArray array];
     
-    NSArray *contacts = (__bridge NSArray *)(ABAddressBookCopyArrayOfAllPeople(_addressBook));
+    NSArray *contacts = (__bridge NSArray *)(ABAddressBookCopyArrayOfAllPeople([self addressBook]));
     [contacts enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if(matchBlock(((__bridge ABRecordRef)obj))) {
             [matchedContacts addObject:obj];
@@ -269,7 +270,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
     //if(self.cachedGroups == nil) {
         NSMutableArray<QABGroup*> *groups = [NSMutableArray array];
         
-        NSArray *nativeGroups = (__bridge NSArray*)ABAddressBookCopyArrayOfAllGroups(_addressBook);
+        NSArray *nativeGroups = (__bridge NSArray*)ABAddressBookCopyArrayOfAllGroups([self addressBook]);
         for (id group in nativeGroups) {
             ABRecordRef groupRef = (__bridge ABRecordRef)group;
             QABGroup *qABGroup =  [self getGroupForRef:groupRef];
@@ -322,11 +323,11 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
     if(!ABRecordSetValue(newGroup, kABGroupNameProperty,(__bridge CFTypeRef)(name), &error)) {
         return nil;
     }
-    if(!ABAddressBookAddRecord(_addressBook, newGroup, &error)) {
-        ABAddressBookRevert(_addressBook);
+    if(!ABAddressBookAddRecord([self addressBook], newGroup, &error)) {
+        ABAddressBookRevert([self addressBook]);
         return nil;
     }
-    if(!ABAddressBookSave(_addressBook, &error)) {
+    if(!ABAddressBookSave([self addressBook], &error)) {
         return nil;
     }
     
@@ -340,10 +341,10 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
         return nil;
     }
     if(!ABRecordSetValue(groupRef, kABGroupNameProperty,(__bridge CFTypeRef)(name), &error)) {
-        ABAddressBookRevert(_addressBook);
+        ABAddressBookRevert([self addressBook]);
         return nil;
     }
-    if(!ABAddressBookSave(_addressBook, &error)) {
+    if(!ABAddressBookSave([self addressBook], &error)) {
         return nil;
     }
     
@@ -357,18 +358,14 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
     }
     
     CFErrorRef error = NULL;
-    if(!ABAddressBookRemoveRecord(_addressBook, groupRef, &error)) {
-        ABAddressBookRevert(_addressBook);
+    if(!ABAddressBookRemoveRecord([self addressBook], groupRef, &error)) {
+        ABAddressBookRevert([self addressBook]);
         return NO;
     }
     
     
     CFRelease(groupRef);
-    if(!ABAddressBookSave(_addressBook, &error)) {
-        return NO;
-    }
-    
-    return YES;
+    return [self saveAddressBook];
 }
 
 -(BOOL) addMembers:(NSArray<QABContact*>*) members toGroup:(NSNumber*) groupId {
@@ -387,23 +384,19 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
         ABRecordRef memberRef = [self getRecordForId:[member identifier]];
         CFErrorRef error = NULL;
         if(!ABGroupAddMember(groupRef, memberRef, &error)) {
-            ABAddressBookRevert(_addressBook);
+            ABAddressBookRevert([self addressBook]);
             statusSuccess = NO;
             break;
         }
 //        CFRelease(memberRef);
     }
     if(!statusSuccess) {
-        ABAddressBookRevert(_addressBook);
+        ABAddressBookRevert([self addressBook]);
         return NO;
     }
     
     CFErrorRef error = NULL;
-    if(!ABAddressBookSave(_addressBook, &error)) {
-        return NO;
-    }
-    
-    return YES;
+    return [self saveAddressBook];
 }
 
 -(BOOL) addMember:(QABContact*) member toGroup:(NSNumber*) groupId {
@@ -426,23 +419,19 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
         ABRecordRef memberRef = [self getRecordForId:[member identifier]];
         CFErrorRef error = NULL;
         if(!ABGroupRemoveMember(groupRef, memberRef, &error)) {
-            ABAddressBookRevert(_addressBook);
+            ABAddressBookRevert([self addressBook]);
             statusSuccess = NO;
             break;
         }
 //        CFRelease(memberRef);
     }
     if(!statusSuccess) {
-        ABAddressBookRevert(_addressBook);
+        ABAddressBookRevert([self addressBook]);
         return NO;
     }
     
     CFErrorRef error = NULL;
-    if(!ABAddressBookSave(_addressBook, &error)) {
-        return NO;
-    }
-    
-    return YES;
+    return [self saveAddressBook];
 }
 
 -(BOOL) removeMember:(QABContact*) member fromGroup:(NSNumber*) groupId {
@@ -454,15 +443,18 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
         return false;
     }
     CFErrorRef error = NULL;
-    if(!ABAddressBookRemoveRecord(_addressBook, member, &error)) {
+    if(!ABAddressBookRemoveRecord([self addressBook], member, &error)) {
         return false;
     }
     error = NULL;
-    if(!ABAddressBookSave(_addressBook, &error)) {
+    return [self saveAddressBook];
+}
+
+-(BOOL) saveMember:(ABRecordRef) member {
+    if(member == nil && member == kABInvalidPropertyType) {
         return false;
     }
-    
-    return true;
+    return [self saveAddressBook];
 }
 
 -(BOOL) addMember:(ABRecordRef) member {
@@ -470,20 +462,15 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
         return false;
     }
     CFErrorRef error = NULL;
-    if(!ABAddressBookAddRecord(_addressBook, member, &error)) {
+    if(!ABAddressBookAddRecord([self addressBook], member, &error)) {
         return false;
     }
-    error = NULL;
-    if(!ABAddressBookSave(_addressBook, &error)) {
-        return false;
-    }
-    
-    return true;
+    return [self saveAddressBook];
 }
 
 -(BOOL) saveAddressBook {
     CFErrorRef error = NULL;
-    if(!ABAddressBookSave(_addressBook, &error)) {
+    if(!ABAddressBookSave([self addressBook], &error)) {
         return false;
     }
     return true;

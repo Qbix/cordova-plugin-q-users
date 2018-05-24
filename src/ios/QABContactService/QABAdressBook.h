@@ -40,6 +40,7 @@ typedef enum QABGroupMemberFilter:NSInteger {
 -(BOOL) removeMember:(QABContact*) member fromGroup:(NSNumber*) groupId;
 -(BOOL) removeMembers:(NSArray<QABContact*>*) members fromGroup:(NSNumber*) groupId;
 -(BOOL) addMember:(ABRecordRef) member;
+-(BOOL) saveMember:(ABRecordRef) member;
 -(BOOL) removeMember:(ABRecordRef) member;
 -(BOOL) saveAddressBook;
 @end
