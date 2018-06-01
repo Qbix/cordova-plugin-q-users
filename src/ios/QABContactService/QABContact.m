@@ -122,6 +122,19 @@
     return [phones copy];
 }
 
+- (UIImage *)photo {
+    @try {
+        if (ABPersonHasImageData([self getContact])) {
+            NSData *data = (NSData*) ABPersonCopyImageDataWithFormat([self getContact], kABPersonImageFormatThumbnail);
+            return [UIImage imageWithData:data];
+        }
+    }
+    @catch (NSException *exception) {
+        return nil;
+    }
+    return nil;
+}
+
 - (NSString*) email {
     NSArray *emails = [self emails];
     

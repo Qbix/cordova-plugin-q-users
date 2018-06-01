@@ -23,6 +23,7 @@
 -(NSString*) fullName;
 -(NSString*) companyName;
 -(NSString*) phone;
+-(UIImage*) photo;
 -(NSArray<NSString*>*) phones;
 -(NSString*) email;
 -(NSArray<NSString*>*) emails;
