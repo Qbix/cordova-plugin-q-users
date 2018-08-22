@@ -10,6 +10,8 @@
 #import "ABContactService.h"
 #import "QABGroup.h"
 
+#define NSExceptionNoAccessToContact @"QABAccessDeniedException"
+
 typedef enum QABGroupMemberFilter:NSInteger {
     QABGroupMemberFilterNotInGroup,
     QABGroupMemberFilterHasCompany,

@@ -11,6 +11,7 @@
 @interface QABAdressBook()
 @property(nonatomic, assign) ABAddressBookRef addressBook;
 @property(nonatomic, strong) NSArray<QABGroup*> *cachedGroups;
+-(void) throwContactAccessDeniendException;
 @end
 
 @implementation QABAdressBook
@@ -26,17 +27,37 @@
         }
     });
     if(qAdressBook == nil) {
-        NSException *e = [NSException
-                          exceptionWithName:@"QABAccessDeniedException"
-                          reason:@"Please allow permission in settings"
-                          userInfo:nil];
-        @throw e;
+        [QABAdressBook throwContactAccessDeniendException];
     }
     return qAdressBook;
 }
-    
+
++(void) throwContactAccessDeniendException {
+    NSException *e = [NSException
+                      exceptionWithName:NSExceptionNoAccessToContact
+                      reason:@"Please allow permission in settings"
+                      userInfo:nil];
+    @throw e;
+}
+
 +(void) requestPermission:(void (^)(BOOL)) callback {
-    [self resolvePermissionAccess:ABAddressBookCreate() withCallback:callback];
+    ABAddressBookRef addressBook = [self createAddressBook];
+    if(addressBook == nil && callback != nil) {
+        callback(NO);
+    } else {
+        [self resolvePermissionAccess:addressBook withCallback:callback];
+    }
+}
+
++(ABAddressBookRef) createAddressBook {
+    CFErrorRef err = nil;
+    ABAddressBookRef addressBook = ABAddressBookCreateWithOptions(NULL, &err);
+    if (err || addressBook == nil) {
+        // handle error
+        CFRelease(err);
+        return nil;
+    }
+    return addressBook;
 }
 
 -(ABAddressBookRef) getAddressBookRef {
@@ -46,13 +67,22 @@
 - (instancetype)init {
     self = [super init];
     if(self) {
-        [self setAddressBook:ABAddressBookCreate()];
+        ABAddressBookRef addressBook = [QABAdressBook createAddressBook];
+        if(addressBook == nil) {
+            return nil;
+        }
+        [self setAddressBook:addressBook];
         CFRetain([self addressBook]);
-        dispatch_async(dispatch_get_main_queue(), ^ {
-            ABAddressBookRegisterExternalChangeCallback([self addressBook], addressBookChanged, (__bridge void *)self);
-        });
         
-        [QABAdressBook resolvePermissionAccess:[self addressBook] withCallback:nil];
+        [QABAdressBook resolvePermissionAccess:[self addressBook] withCallback:^(BOOL granted) {
+            if(granted) {
+                dispatch_async(dispatch_get_main_queue(), ^ {
+                    ABAddressBookRegisterExternalChangeCallback([self addressBook], addressBookChanged, (__bridge void *)self);
+                });
+            } else {
+                exit(0);
+            }
+        }];
         
     }
     return self;
@@ -75,12 +105,7 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
             if(callback != nil) {
                 callback(NO);
             } else {
-                // show alert that need enable
-                NSException *e = [NSException
-                                  exceptionWithName:@"QABAccessDeniedException"
-                                  reason:@"Access Denied"
-                                  userInfo:nil];
-                @throw e;
+                [self throwContactAccessDeniendException];
             }
         }
             break;
