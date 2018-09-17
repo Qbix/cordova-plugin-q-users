@@ -9,6 +9,32 @@
 #import "QABContact.h"
 #import "QABAdressBook.h"
 
+
+@interface QABLabelValue()
+@property(nonatomic, strong) NSString* innerValue;
+@property(nonatomic, assign) NSInteger innerLabel;
+@end
+
+@implementation QABLabelValue
+-(instancetype) init:(NSString*) value andLabel:(NSInteger)label {
+    self = [super init];
+    if(self) {
+        [self setInnerValue:value];
+        [self setInnerLabel:label];
+    }
+    return self;
+}
+
+-(NSString*) value {
+    return [self innerValue];
+}
+
+-(NSInteger) label {
+    return [self innerLabel];
+}
+@end
+
+
 @interface QABContact()
 @property(nonatomic, assign) ABRecordID contactIdentifier;
 @property(nonatomic, assign) ABRecordRef cachedContact;
@@ -108,6 +134,42 @@
     return [phones objectAtIndex:0];
 }
 
+-(NSArray<QABLabelValue*>*) phonesWithLabel {
+    ABRecordRef recordRef = [self getContact];
+    
+    NSMutableArray<QABLabelValue*> *phones = [NSMutableArray array];
+    ABMultiValueRef phonesProperty =(__bridge ABMultiValueRef)((__bridge NSString*)ABRecordCopyValue(recordRef, kABPersonPhoneProperty));
+    if (phonesProperty != NULL) {
+        for(CFIndex i = 0; i < ABMultiValueGetCount(phonesProperty); i++) {
+            NSString *mobileLabel = (__bridge NSString*)ABMultiValueCopyLabelAtIndex(phonesProperty, i);
+            NSInteger label = OTHER_LABEL;
+            if([mobileLabel isEqualToString:(NSString *)kABPersonPhoneMobileLabel]) {
+                label = MOBILE_LABEL;
+            } else if([mobileLabel isEqualToString:(NSString *)kABPersonPhoneIPhoneLabel])  {
+                label = IPHONE_LABEL;
+            } else if([mobileLabel isEqualToString:(NSString *)kABPersonPhoneMainLabel])  {
+                label = MAIN_LABEL;
+            } else if([mobileLabel isEqualToString:(NSString *)kABPersonPhoneHomeFAXLabel])  {
+                label = HOME_FAX_LABEL;
+            } else if([mobileLabel isEqualToString:(NSString *)kABPersonPhoneWorkFAXLabel])  {
+                label = WORK_FAX_LABEL;
+            } else if([mobileLabel isEqualToString:(NSString *)kABPersonPhoneOtherFAXLabel])  {
+                label = OTHER_LABEL;
+            } else if([mobileLabel isEqualToString:(NSString *)kABPersonPhonePagerLabel])  {
+                label = PAGER_LABEL;
+            } else if([mobileLabel containsString:@"Home"]) {
+                label = HOME_LABEL;
+            } else if([mobileLabel containsString:@"Work"]) {
+                label = WORK_LABEL;
+            }
+            NSString *phone = (__bridge NSString*)ABMultiValueCopyValueAtIndex(phonesProperty, i);
+            [phones addObject:[[QABLabelValue alloc] init:phone andLabel:label]];
+        }
+    }
+    
+    return phones;
+}
+
 - (NSArray<NSString*>*) phones {
     ABRecordRef recordRef = [self getContact];
     
@@ -115,7 +177,9 @@
     ABMultiValueRef phonesProperty = ABRecordCopyValue(recordRef, kABPersonPhoneProperty);
     if (phonesProperty != NULL) {
         NSArray *phonesArray = (__bridge NSArray*)ABMultiValueCopyArrayOfAllValues(phonesProperty);
-        [phones addObjectsFromArray:phonesArray];
+        if(phonesArray != nil) {
+            [phones addObjectsFromArray:phonesArray];
+        }
         CFRelease(phonesProperty);
     }
     
@@ -144,6 +208,30 @@
     return [emails objectAtIndex:0];
 }
 
+-(NSArray<QABLabelValue*>*) emailsWithLabel {
+    ABRecordRef recordRef = [self getContact];
+    
+    NSMutableArray<QABLabelValue*> *emails = [NSMutableArray array];
+    ABMultiValueRef emailsProperty =(__bridge ABMultiValueRef)((__bridge NSString*)ABRecordCopyValue(recordRef, kABPersonEmailProperty));
+    if (emailsProperty != NULL) {
+        for(CFIndex i = 0; i < ABMultiValueGetCount(emailsProperty); i++) {
+            NSString *mobileLabel = (__bridge NSString*)ABMultiValueCopyLabelAtIndex(emailsProperty, i);
+            NSInteger label = EMAIL_OTHER_LABEL;
+            if([mobileLabel containsString:@"Home"]) {
+                label = EMAIL_HOME_LABEL;
+            } else if([mobileLabel containsString:@"Work"]) {
+                label = EMAIL_WORK_LABEL;
+            } else if([mobileLabel containsString:@"iCloud"]) {
+                label = EMAIL_ICLOUD_LABEL;
+            }
+            NSString *email = (__bridge NSString*)ABMultiValueCopyValueAtIndex(emailsProperty, i);
+            [emails addObject:[[QABLabelValue alloc] init:email andLabel:label]];
+        }
+    }
+    
+    return emails;
+}
+
 - (NSArray<NSString*>*) emails {
     ABRecordRef recordRef = [self getContact];
     
@@ -151,7 +239,9 @@
     ABMultiValueRef emailsProperty = ABRecordCopyValue(recordRef, kABPersonEmailProperty);
     if (emailsProperty != NULL) {
         NSArray *emailsArray = (__bridge NSArray*)ABMultiValueCopyArrayOfAllValues(emailsProperty);
-        [emails addObjectsFromArray:emailsArray];
+        if(emailsArray != nil) {
+            [emails addObjectsFromArray:emailsArray];
+        }
         CFRelease(emailsProperty);
     }
     
