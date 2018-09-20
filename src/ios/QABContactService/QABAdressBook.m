@@ -51,13 +51,22 @@
 
 +(ABAddressBookRef) createAddressBook {
     CFErrorRef err = nil;
-    ABAddressBookRef addressBook = ABAddressBookCreateWithOptions(NULL, &err);
-    if (err || addressBook == nil) {
-        // handle error
-        CFRelease(err);
-        return nil;
-    }
+    ABAddressBookRef addressBook = ABAddressBookCreateWithOptions(NULL, NULL);
+//    if (err || addressBook == nil) {
+//        // handle error
+//        CFRelease(err);
+//        return nil;
+//    }
     return addressBook;
+}
+
+-(void) reInitAddressBook {
+    ABAddressBookRef addressBook = [QABAdressBook createAddressBook];
+    if(addressBook == nil) {
+        [self setAddressBook:nil];
+    }
+    [self setAddressBook:addressBook];
+    CFRetain([self addressBook]);
 }
 
 -(ABAddressBookRef) getAddressBookRef {
@@ -67,17 +76,12 @@
 - (instancetype)init {
     self = [super init];
     if(self) {
-        ABAddressBookRef addressBook = [QABAdressBook createAddressBook];
-        if(addressBook == nil) {
-            return nil;
-        }
-        [self setAddressBook:addressBook];
-        CFRetain([self addressBook]);
+        [self reInitAddressBook];
         
         [QABAdressBook resolvePermissionAccess:[self addressBook] withCallback:^(BOOL granted) {
             if(granted) {
                 dispatch_async(dispatch_get_main_queue(), ^ {
-                    ABAddressBookRegisterExternalChangeCallback([self addressBook], addressBookChanged, (__bridge void *)self);
+//                    ABAddressBookRegisterExternalChangeCallback([self addressBook], addressBookChanged, (__bridge void *)self);
                 });
             } else {
                 exit(0);
@@ -88,8 +92,7 @@
     return self;
 }
 
-void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void *context)
-{
+void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void *context) {
     NSLog(@"AddressBook Changed");
     if(context != nil) {
         QABAdressBook *qAbAdressBook = (__bridge QABAdressBook*)context;
