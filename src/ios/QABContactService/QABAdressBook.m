@@ -37,6 +37,7 @@
                       exceptionWithName:NSExceptionNoAccessToContact
                       reason:@"Please allow permission in settings"
                       userInfo:nil];
+    
     @throw e;
 }
 
@@ -66,11 +67,18 @@
         [self setAddressBook:nil];
     }
     [self setAddressBook:addressBook];
-    CFRetain([self addressBook]);
+    if([self addressBook] != nil) {
+        CFRetain([self addressBook]);
+    }
+    
 }
 
 -(ABAddressBookRef) getAddressBookRef {
-    return CFRetain([self addressBook]);
+    if([self addressBook] != nil) {
+        return CFRetain([self addressBook]);
+    } else {
+        return [self addressBook];
+    }
 }
     
 - (instancetype)init {
@@ -80,11 +88,9 @@
         
         [QABAdressBook resolvePermissionAccess:[self addressBook] withCallback:^(BOOL granted) {
             if(granted) {
-                dispatch_async(dispatch_get_main_queue(), ^ {
 //                    ABAddressBookRegisterExternalChangeCallback([self addressBook], addressBookChanged, (__bridge void *)self);
-                });
             } else {
-                exit(0);
+                [QABAdressBook throwContactAccessDeniendException];
             }
         }];
         
@@ -108,15 +114,22 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
             if(callback != nil) {
                 callback(NO);
             } else {
-                [self throwContactAccessDeniendException];
+                [QABAdressBook throwContactAccessDeniendException];
             }
         }
             break;
         case kABAuthorizationStatusNotDetermined: {
             if(callback!= nil) {
+                __block BOOL grantedResult = NO;
+                dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
                 ABAddressBookRequestAccessWithCompletion(addressBook, ^(bool granted, CFErrorRef error) {
-                    callback(granted);
+                    grantedResult = granted;
+                    dispatch_semaphore_signal(semaphore);
                 });
+                dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+                if(!grantedResult) {
+                    [QABAdressBook throwContactAccessDeniendException];
+                }
             } else {
                 ABAddressBookRequestAccessWithCompletion(addressBook, nil);
             }
