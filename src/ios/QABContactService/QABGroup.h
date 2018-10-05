@@ -35,6 +35,7 @@ typedef enum QABGroupMemberSorting:NSInteger {
 
 
 @property(nonatomic, assign) QABGroupMemberSorting membersSorting;
+@property(nonatomic, assign) QABGroupType groupType;
 
 @property(nonatomic, readonly, strong) NSString * _Nonnull name;
 @property(nonatomic, readonly, assign) NSInteger count;

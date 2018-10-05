@@ -9,7 +9,6 @@
 #import "QABGroup.h"
 
 @interface QABGroup()
-@property(nonatomic, assign) QABGroupType groupType;
 @property(nonatomic, assign) ABRecordRef cachedGroup;
 @property(nonatomic, strong) NSMutableArray<QABContact*> *members;
 @end
