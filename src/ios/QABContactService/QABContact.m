@@ -189,7 +189,7 @@
 - (UIImage *)photo {
     @try {
         if (ABPersonHasImageData([self getContact])) {
-            NSData *data = (NSData*) ABPersonCopyImageDataWithFormat([self getContact], kABPersonImageFormatThumbnail);
+            NSData *data = (__bridge NSData*) ABPersonCopyImageDataWithFormat([self getContact], kABPersonImageFormatThumbnail);;
             return [UIImage imageWithData:data];
         }
     }
