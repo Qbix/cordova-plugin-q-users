@@ -21,7 +21,11 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         @try {
-            qAdressBook = [[[QABAdressBook alloc] init] retain];
+            #if !__has_feature(objc_arc)
+                qAdressBook = [[[QABAdressBook alloc] init] retain];
+            #else
+                qAdressBook = [[QABAdressBook alloc] init];
+            #endif
         } @catch(NSException *e) {
             qAdressBook = nil;
         }
