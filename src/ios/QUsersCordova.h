@@ -11,5 +11,5 @@
 //- (void) hello:(CDVInvokedUrlCommand*)command;
 //- (void) executeCallbackToJS:(NSDictionary*) changed;
 //- (void) setAddressBookChangeListener:(CDVInvokedUrlCommand*)command;
-
+-(void) resolvePermissionAccess:(NSString*) callbackId andCallback:(void (^)(QABAdressBook*)) callback;
 @end
