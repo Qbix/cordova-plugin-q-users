@@ -9,8 +9,8 @@
     <engine name="cordova" version=">=3.4.0"/>
   </engines>
 
-  <dependency id="cordova-plugin-contacts"/>
-
+  <dependency id="cordova-plugin-contacts" url="https://github.com/Qbix/cordova-plugin-contacts.git"/>
+  
   <js-module src="www/q_users_cordova.js" name="Q.Users.Cordova">
     <clobbers target="Q.Users.Cordova" />
   </js-module>
@@ -28,6 +28,9 @@
       <feature name="QUsersCordova">
         <param name="android-package" value="com.q.users.cordova.plugin.QUsersCordova"/>
       </feature>
+      <feature name="QUsersUICordova">
+        <param name="ios-package" value="QUsersUICordova" />
+      </feature>
     </config-file>
     <config-file target="AndroidManifest.xml" parent="/manifest">
       <uses-permission android:name="android.permission.READ_CONTACTS" />
@@ -39,6 +42,7 @@
     <source-file src="src/android/GroupAccessor.java" target-dir="src/com/q/users/cordova/plugin/"/>
     <source-file src="src/android/QbixGroup.java" target-dir="src/com/q/users/cordova/plugin/"/>
     <source-file src="src/android/QUsersCordova.java" target-dir="src/com/q/users/cordova/plugin/"/>
+    <source-file src="src/android/QUsersUICordova.java" target-dir="src/com/q/users/cordova/plugin/"/>
     <source-file src="src/android/RawIdLabelId.java" target-dir="src/com/q/users/cordova/plugin/"/>
     <source-file src="src/android/AccNameGroup.java" target-dir="src/com/q/users/cordova/plugin/"/>
     <source-file src="src/android/GroupHelper.java" target-dir="src/com/q/users/cordova/plugin/"/>
@@ -53,10 +57,15 @@
       <feature name="QUsersCordova">
         <param name="ios-package" value="QUsersCordova" />
       </feature>
+      <feature name="QUsersUICordova">
+        <param name="ios-package" value="QUsersUICordova" />
+      </feature>
     </config-file>
 
     <header-file src="src/ios/QUsersCordova.h" target-dir="QUsersCordovaPlugin"/>
     <source-file src="src/ios/QUsersCordova.m" target-dir="QUsersCordovaPlugin"/>
+    <header-file src="src/ios/QUsersUICordova.h" target-dir="QUsersCordovaPlugin"/>
+    <source-file src="src/ios/QUsersUICordova.m" target-dir="QUsersCordovaPlugin"/>
     <header-file src="src/ios/QABContactService/ABContactService.h" target-dir="QUsersCordovaPlugin"/>
     <header-file src="src/ios/QABContactService/QABAdressBook.h" target-dir="QUsersCordovaPlugin"/>
     <source-file src="src/ios/QABContactService/QABAdressBook.m" target-dir="QUsersCordovaPlugin"/>

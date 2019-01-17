@@ -153,4 +153,11 @@ module.exports = {
     //        }
 };
 
+var UI = {
+    show:function(contactId, successCallback, errorCallback) {
+        cordova.exec(successCallback, errorCallback, "QUsersUICordova", "show", [contactId]);
+    }
+}
+
 module.exports.Labels = Labels;
+module.exports.UI = UI;
