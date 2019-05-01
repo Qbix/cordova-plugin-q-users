@@ -128,7 +128,7 @@ var Labels = {
      * @param onFailure - gets error code and list of contactIds which were not added
      */
     checkContactsAccount: function(contactIds, successCallback, errorCallback) {
-        this.exec("checkContactsAccount", [contactId], successCallback, errorCallback);
+        this.exec("checkContactsAccount", [contactIds], successCallback, errorCallback);
     },
     /**
      * Receive information about contacts owners -- Android denied to add contact from one owner to another owner label.

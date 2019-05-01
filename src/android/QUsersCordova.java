@@ -1,8 +1,10 @@
 package com.q.users.cordova.plugin;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -17,6 +19,7 @@ import java.util.List;
 
 
 public class QUsersCordova extends CordovaPlugin {
+    private final String TAG = QUsersCordova.class.getCanonicalName();
 
     //Actions
     private final String GET_ALL_LABELS_ACTION = "getAll";
@@ -102,8 +105,8 @@ public class QUsersCordova extends CordovaPlugin {
      * @param first       First permission name
      * @param second      Second permission name
      */
-    private void getDoublePermission(int requestCode, String first, String second) {
-        PermissionHelper.requestPermissions(this, requestCode, new String[]{first, second});
+    private void getPermission(int requestCode, String... permissions) {
+        PermissionHelper.requestPermissions(this, requestCode, permissions);
     }
 
     /**
@@ -143,7 +146,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(ALL_LABELS_REQ_CODE, READ, ACCOUNTS);
+                getPermission(ALL_LABELS_REQ_CODE, READ, ACCOUNTS);
             }
 
             return true;
@@ -155,7 +158,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(LABELS_BY_SOURCE_ID_REQ_CODE, READ, ACCOUNTS);
+                getPermission(LABELS_BY_SOURCE_ID_REQ_CODE, READ, ACCOUNTS);
             }
 
             return true;
@@ -167,7 +170,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, ACCOUNTS);
+                getPermission(REMOVE_CONTACT_FROM_LABEL_REQ_CODE, WRITE, READ, ACCOUNTS);
             }
 
             return true;
@@ -179,7 +182,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(ADD_CONTACT_TO_LABEL_REQ_CODE, WRITE, ACCOUNTS);
+                getPermission(ADD_CONTACT_TO_LABEL_REQ_CODE, WRITE, READ, ACCOUNTS);
             }
 
             return true;
@@ -191,19 +194,19 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(REMOVE_LABEL_REQ_CODE, WRITE, ACCOUNTS);
+                getPermission(REMOVE_LABEL_REQ_CODE, WRITE, READ, ACCOUNTS);
             }
 
             return true;
         } else if (action.equals(SAVE_NEW_LABEL_OR_EDIT)) {
-            if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
+            if (PermissionHelper.hasPermission(this, WRITE) && PermissionHelper.hasPermission(this, READ) && PermissionHelper.hasPermission(this, ACCOUNTS)) {
                 this.cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         saveOrEditLabel(executeArgs);
                     }
                 });
             } else {
-                getDoublePermission(SAVE_NEW_LABEL_OR_EDIT_REQ_CODE, WRITE, ACCOUNTS);
+                getPermission(SAVE_NEW_LABEL_OR_EDIT_REQ_CODE, WRITE, READ, ACCOUNTS);
             }
 
             return true;
@@ -215,7 +218,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(SET_LABEL_LIST_FOR_CONTACT_REQ_CODE, WRITE, ACCOUNTS);
+                getPermission(SET_LABEL_LIST_FOR_CONTACT_REQ_CODE, WRITE, READ, ACCOUNTS);
             }
 
             return true;
@@ -227,7 +230,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(GET_NATIVE_LABEL_FOR_CONTACT_REQ_CODE, READ, ACCOUNTS);
+                getPermission(GET_NATIVE_LABEL_FOR_CONTACT_REQ_CODE, READ, ACCOUNTS);
             }
 
             return true;
@@ -239,7 +242,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(SMART_REQ_CODE, READ, ACCOUNTS);
+                getPermission(SMART_REQ_CODE, READ, ACCOUNTS);
             }
 
             return true;
@@ -251,7 +254,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(CHECK_CONTACTS_ACCOUNT_REQ_CODE, READ, ACCOUNTS);
+                getPermission(CHECK_CONTACTS_ACCOUNT_REQ_CODE, READ, ACCOUNTS);
             }
 
             return true;
@@ -263,7 +266,7 @@ public class QUsersCordova extends CordovaPlugin {
                     }
                 });
             } else {
-                getDoublePermission(CHECK_LABELS_ACCOUNT_REQ_CODE, READ, ACCOUNTS);
+                getPermission(CHECK_LABELS_ACCOUNT_REQ_CODE, READ, ACCOUNTS);
             }
 
             return true;
@@ -451,19 +454,26 @@ public class QUsersCordova extends CordovaPlugin {
                 if (sourceIdIsValid && titleIsValid) {
                     if (sourceId.equals("-1")) {
                         //for not specified sourceId (need to add new label)
-                        String addMessage = groupAccessor.addLabelToDatabase(title);
-                        if (addMessage.equals(SUCCESS)) {
-                            callbackContext.success();
-                        } else {
-                            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, addMessage));
+                        try {
+                            QbixGroup label = groupAccessor.addLabelToDatabase(title);
+                            if(label != null) {
+                                callbackContext.success(label.toJson());
+                            } else {
+                                callbackContext.error(UNKNOWN_ERROR);
+                            }
+                        } catch (Exception e) {
+                            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, e.getMessage()));
                         }
                     } else {
-                        //for specified sourceId (need to edit existing one)
-                        String editMessage = groupAccessor.editLabelInDatabase(sourceId, title);
-                        if (editMessage.equals(SUCCESS)) {
-                            callbackContext.success();
-                        } else {
-                            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, editMessage));
+                        try {
+                            QbixGroup label = groupAccessor.editLabelInDatabase(sourceId, title);
+                            if(label != null) {
+                                callbackContext.success(label.toJson());
+                            } else {
+                                callbackContext.error(UNKNOWN_ERROR);
+                            }
+                        } catch (Exception e) {
+                            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, e.getMessage()));
                         }
                     }
                 } else {
@@ -779,5 +789,13 @@ public class QUsersCordova extends CordovaPlugin {
     public void onRestoreStateForActivityResult(Bundle state, CallbackContext callbackContext) {
         QUsersCordova.this.callbackContext = callbackContext;
         this.groupAccessor = new GroupAccessor(this.cordova);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if(requestCode == ValidationUtil.REQUEST_CODE_PICK_ACCOUNT) {
+            Log.d(TAG, "Response of account pickup");
+        }
+        super.onActivityResult(requestCode, resultCode, intent);
     }
 }

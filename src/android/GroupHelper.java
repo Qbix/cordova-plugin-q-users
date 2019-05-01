@@ -4,6 +4,9 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SyncInfo;
+import android.content.SyncRequest;
+import android.content.SyncStatusObserver;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -12,6 +15,12 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+
+import static android.content.ContentResolver.SYNC_EXTRAS_EXPEDITED;
+import static android.content.ContentResolver.SYNC_EXTRAS_MANUAL;
+import static android.content.ContentResolver.SYNC_EXTRAS_OVERRIDE_TOO_MANY_DELETIONS;
 
 public class GroupHelper {
 
@@ -242,8 +251,8 @@ public class GroupHelper {
      *
      * @param context Context instance for getting account manager
      */
-    public static void requestSyncNow(final Context context) {
-        new Thread(new Runnable() {
+    public static Thread requestSyncNow(final Context context) {
+        Thread syncThread = new Thread(new Runnable() {
             @Override
             public void run() {
 
@@ -261,15 +270,66 @@ public class GroupHelper {
                     if (isSyncable > 0 /* && isSyncOn */) {
                         Log.d("sync_checker", "request Sync");
                         Bundle bundle = new Bundle();
-                        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
-                        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_OVERRIDE_TOO_MANY_DELETIONS, true);
-                        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-                        ContentResolver.requestSync(account, ContactsContract.AUTHORITY, bundle);
+                        bundle.putBoolean(SYNC_EXTRAS_EXPEDITED, true);
+                        bundle.putBoolean(SYNC_EXTRAS_OVERRIDE_TOO_MANY_DELETIONS, true);
+                        bundle.putBoolean(SYNC_EXTRAS_MANUAL, true);
+                        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+                        Object mContentProviderHandle = ContentResolver.addStatusChangeListener(
+                                ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE |
+                                ContentResolver.SYNC_OBSERVER_TYPE_PENDING, new SyncStatusObserver() {
+
+                                    private boolean isActive = false;
+                            @Override
+                            public void onStatusChanged(int which) {
+                                if (which == ContentResolver.SYNC_OBSERVER_TYPE_PENDING) {
+                                    // 'Pending' state changed.
+                                    if (ContentResolver.isSyncPending(account, ContactsContract.AUTHORITY)) {
+                                        // There is now a pending sync.
+                                        Log.d("GroupHelper", "There is now a pending sync.");
+                                    } else {
+                                        // There is no longer a pending sync.
+                                        Log.d("GroupHelper", "There is no longer a pending sync");
+                                    }
+                                } else if (which == ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE) {
+                                    // 'Active' state changed.
+                                    if (ContentResolver.isSyncActive(account, ContactsContract.AUTHORITY)) {
+                                        isActive = true;
+                                        Log.d("GroupHelper", "There is now an active sync");
+                                        // There is now an active sync.
+                                    } else {
+                                        // There is no longer an active sync.
+                                        Log.d("GroupHelper", "There is no longer an active sync");
+                                        if(isActive){
+                                            Log.d("GroupHelper", "Synced");
+                                            countDownLatch.countDown();
+                                        }
+                                        isActive = false;
+
+                                    }
+                                }
+                            }
+                        });
+
+                        SyncRequest request = new SyncRequest.Builder()
+                                .setSyncAdapter(account, ContactsContract.AUTHORITY)
+                                .setManual(true)
+                                .setExpedited(true)
+                                .setExtras(bundle)
+                                .build();
+                        ContentResolver.requestSync(request);
+                        try {
+                            countDownLatch.await();
+                            ContentResolver.removeStatusChangeListener(mContentProviderHandle);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
-        }, "SyncLauncher").start();
-
+        }, "SyncLauncher");
+        syncThread.start();
+        return syncThread;
     }
 
     /**

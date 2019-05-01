@@ -176,6 +176,7 @@ Edits existing labels title or adds new one. If label is added (not edited), dev
 
 ### Supporded platforms
 - __Android__
+- __iOS__
 
 __Example__:
 ```js
@@ -266,7 +267,7 @@ var photoContacts = Q.Users.Cordova.Labels.smart("hasPhoto",function(data){conso
 ```
 
 ## checkContactsAccount
-Binds given `contactId`s to their account's name and type. Returns JSON array of `AccountContactIds` object. Property names are the keys.
+Check which accounts have `contactId`s. Returns JSON array of `AccountContactIds` object. Property names are the keys.
 
 ### Parameters
 - __contactIds__: List of `contactId`s which accounts' information wanted to be returned. [JSON array of ints] 
@@ -279,8 +280,8 @@ __Example__:
 var accountContactIdsList = Q.Users.Cordova.Labels.checkContactsAccount([11,25,47],function(data){console.log(data);}, function(err){console.log(err)})
 ```
 
-## checkContactsAccount
-Binds given label `id`s to their account's name and type. Returns JSON array of `AccountLabelIds` object. Property names are the keys.
+## checkLabelsAccount
+Check which accounts have label `id`s to their account's name and type. Returns JSON array of `AccountLabelIds` object. Property names are the keys.
 
 ### Parameters
 - __labelIds__: List of label `id`s which accounts' information wanted to be returned. [JSON array of Strings] 

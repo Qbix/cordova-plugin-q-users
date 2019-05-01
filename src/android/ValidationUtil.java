@@ -2,7 +2,9 @@ package com.q.users.cordova.plugin;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.provider.ContactsContract;
 
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ValidationUtil {
+    public static final int REQUEST_CODE_PICK_ACCOUNT = 21;
 
     /**
      * Checks if given String is not null or empty.
@@ -183,9 +186,15 @@ public class ValidationUtil {
      * @param context Context for getting account manager
      * @return true if there is at least 1 account bound to device, false if not
      */
-    protected static boolean doesDeviceHasAccounts(Context context) {
+    protected static boolean doesDeviceHasAccounts(Activity context) {
         AccountManager accountManager = AccountManager.get(context);
         Account[] accounts = accountManager.getAccounts();
+        if(accounts.length == 0) {
+            Intent intent = AccountManager.newChooseAccountIntent(null, null,
+                    new String[]{"com.google"}, false, null, null, null, null);
+
+            context.startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
+        }
         return accounts.length != 0;
     }
 

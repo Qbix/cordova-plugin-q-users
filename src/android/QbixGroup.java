@@ -7,6 +7,7 @@ import java.util.List;
 
 public class QbixGroup {
 
+    public String systemId;
     public String sourceId;
     public String title;
     public String notes;
@@ -20,6 +21,7 @@ public class QbixGroup {
     public JSONObject toJson() {
         try {
             JSONObject jsonGroup = new JSONObject();
+//            jsonGroup.put("systemId", systemId!=null ? systemId: "");
             jsonGroup.put("id", sourceId!=null ? sourceId: "");
             jsonGroup.put("title", title!=null ? title: "");
             jsonGroup.put("notes", notes!=null ? notes: "");
