@@ -24,6 +24,7 @@ import java.util.List;
  */
 public class GroupAccessor {
 
+    public static final String GROUP_SYNCING = "GROUP_SYNCING";
     private CordovaInterface app;
 
     protected GroupAccessor(CordovaInterface context) {
@@ -98,6 +99,8 @@ public class GroupAccessor {
                         labels.get(index).contactIds.addAll(contactIds);
                         Log.i("group_info_checker", "group: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)) + " is existing");
                     }
+                } else {
+                    labels.add(group);
                 }
             }
         }
@@ -391,78 +394,6 @@ public class GroupAccessor {
         }
     }
 
-    protected QbixGroup getLabelByUri(Uri uri) {
-        List<QbixGroup> labels = new ArrayList<>();
-        //Get all labels (including not visible and deleted ones) from content provider
-        Cursor cursor = app.getActivity().getContentResolver().query(
-                uri,
-                new String[]{
-                        ContactsContract.Groups._ID,
-                        ContactsContract.Groups.SOURCE_ID,
-                        ContactsContract.Groups.TITLE,
-                        ContactsContract.Groups.NOTES,
-                        ContactsContract.Groups.GROUP_VISIBLE,
-                        ContactsContract.Groups.DELETED,
-                        ContactsContract.Groups.SHOULD_SYNC,
-                        ContactsContract.Groups.GROUP_IS_READ_ONLY
-                },
-                null,
-                null,
-                null);
-        List<String> sourceIds = new ArrayList<>();
-        List<RawIdLabelId> rawIdLabelIds = GroupHelper.getExistingRawIdLabelIdPairs(app.getActivity());
-        HashMap<String, String> rawIdContactIdPair = GroupHelper.getExistingRawIdContactIdPairs(app.getActivity());
-        List<String> systemIds = GroupHelper.getSystemIds(app.getActivity());
-        QbixGroup finalGroup = null;
-        while (cursor.moveToNext()) {
-            if (!systemIds.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups._ID)))) {
-                QbixGroup group = new QbixGroup();
-
-                group.systemId = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups._ID));
-                group.sourceId = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID));
-                group.title = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.TITLE));
-                group.notes = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.NOTES));
-                group.isVisible = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.GROUP_VISIBLE)) == 0;
-                group.isDeleted = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.DELETED)) == 1;
-                group.shouldSync = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.SHOULD_SYNC)) == 1;
-                group.readOnly = cursor.getInt(cursor.getColumnIndex(ContactsContract.Groups.GROUP_IS_READ_ONLY)) == 1;
-                Log.i("group_info_checker", "id: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups._ID)));
-                Log.i("group_info_checker", "source_id: " + group.sourceId);
-                Log.i("group_info_checker", "title: " + group.title);
-                Log.i("group_info_checker", "notes: " + group.notes);
-                Log.i("group_info_checker", "is_visible: " + group.isVisible);
-                Log.i("group_info_checker", "deleted: " + group.isDeleted);
-                Log.i("group_info_checker", "should_sync: " + group.shouldSync);
-                Log.i("group_info_checker", "read_only: " + group.readOnly);
-
-                String labelId = cursor.getString(cursor.getColumnIndex(ContactsContract.Groups._ID));
-                List<Integer> rawIds = new ArrayList<>();
-                for (int i = 0; i < rawIdLabelIds.size(); i++) {
-                    if (rawIdLabelIds.get(i).labelId.equals(labelId)) {
-                        rawIds.add(Integer.valueOf(rawIdLabelIds.get(i).rawId));
-                    }
-                }
-                List<Integer> contactIds = GroupHelper.getContactIds(rawIdContactIdPair, rawIds);
-                if (group.sourceId != null) {
-                    if (!sourceIds.contains(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)))) {
-                        group.contactIds = contactIds;
-                        sourceIds.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
-                        labels.add(group);
-                    } else {
-                        int index = sourceIds.indexOf(cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)));
-                        labels.get(index).contactIds.addAll(contactIds);
-                        Log.i("group_info_checker", "group: " + cursor.getString(cursor.getColumnIndex(ContactsContract.Groups.SOURCE_ID)) + " is existing");
-                    }
-                }
-
-                finalGroup = group;
-            }
-        }
-        cursor.close();
-        return finalGroup;
-
-    }
-
     /**
      * Adds new label with given title on every account on device and syncs them all
      * (for generating some autogenerating info).
@@ -478,13 +409,13 @@ public class GroupAccessor {
         Account account = accounts[0];
         //TODO: allow edit multiple accounts;
 //        for (int i = 0; i < accounts.length; i++) {
-            ops.add(ContentProviderOperation.newInsert(ContactsContract.Groups.CONTENT_URI)
-                    .withValue(ContactsContract.Groups.TITLE, title)
-                    .withValue(ContactsContract.Groups.ACCOUNT_NAME, account.name)
-                    .withValue(ContactsContract.Groups.ACCOUNT_TYPE, account.type)
-                    .withYieldAllowed(true)
-                    .build()
-            );
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Groups.CONTENT_URI)
+                .withValue(ContactsContract.Groups.TITLE, title)
+                .withValue(ContactsContract.Groups.ACCOUNT_NAME, account.name)
+                .withValue(ContactsContract.Groups.ACCOUNT_TYPE, account.type)
+                .withYieldAllowed(true)
+                .build()
+        );
 //        }
 
         try {
@@ -493,10 +424,19 @@ public class GroupAccessor {
                 //Syncs accounts for generate SOURCE_ID, SYNC2, SYNC3
                 GroupHelper.requestSyncNow(app.getActivity()).join();
             }
-            if(results.length > 0) {
-                return getLabelByUri(results[0].uri);
-            } else {
-                return null;
+
+            if (results.length > 0) {
+                String systemId = results[0].uri.getLastPathSegment();
+                List<QbixGroup> allLabels = getAllLabels();
+                for (QbixGroup label : allLabels) {
+                    if(label.systemId.equalsIgnoreCase(systemId)) {
+                        if(label.sourceId == null) {
+                            throw new RuntimeException(GROUP_SYNCING);
+                        } else {
+                            return label;
+                        }
+                    }
+                }
             }
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -508,6 +448,7 @@ public class GroupAccessor {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+        return null;
     }
 
     /**
@@ -533,14 +474,13 @@ public class GroupAccessor {
                 ContentProviderResult[] results = app.getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
                 if (results.length >= 1) {
                     //Syncs accounts for generate SOURCE_ID, SYNC2, SYNC3
-                    GroupHelper.requestSyncNow(app.getActivity()).join();
+                    GroupHelper.requestSyncNow(app.getActivity());
                 }
-                List<QbixGroup> created = new ArrayList<>();
-                for (ContentProviderResult result : results) {
-                    created.add(getLabelByUri(result.uri));
-                }
-                if(created.size() >0) {
-                    return created.get(0);
+                List<QbixGroup> allLabels = getAllLabels();
+                for (QbixGroup label : allLabels) {
+                    if (label.sourceId.equalsIgnoreCase(sourceId)) {
+                        return label;
+                    }
                 }
 
                 return null;
@@ -550,10 +490,10 @@ public class GroupAccessor {
             } catch (OperationApplicationException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
-            } catch (InterruptedException e) {
+            } /*catch (InterruptedException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
-            }
+            }*/
         } else {
             throw new RuntimeException(QUsersCordova.MISSING_LABEL_ERROR);
         }
@@ -681,27 +621,27 @@ public class GroupAccessor {
                 groupList = getLabelsBySourceId(sourceIds);
                 List<QbixGroup> finalGroupList = new ArrayList<>();
 
-                for(QbixGroup group : groupList) {
-                    if(doUnion) {
+                for (QbixGroup group : groupList) {
+                    if (doUnion) {
                         boolean contain = false;
-                        for(String id : rawIds) {
-                            if(group.contactIds.contains(Integer.parseInt(id))) {
+                        for (String id : rawIds) {
+                            if (group.contactIds.contains(Integer.parseInt(id))) {
                                 contain = true;
                                 break;
                             }
                         }
-                        if(contain) {
+                        if (contain) {
                             finalGroupList.add(group);
                         }
                     } else {
                         boolean contain = true;
-                        for(String id : rawIds) {
-                            if(!group.contactIds.contains(Integer.parseInt(id))) {
+                        for (String id : rawIds) {
+                            if (!group.contactIds.contains(Integer.parseInt(id))) {
                                 contain = false;
                                 break;
                             }
                         }
-                        if(contain) {
+                        if (contain) {
                             finalGroupList.add(group);
                         }
                     }

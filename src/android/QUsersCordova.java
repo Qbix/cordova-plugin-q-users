@@ -17,6 +17,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.q.users.cordova.plugin.GroupAccessor.GROUP_SYNCING;
+
 
 public class QUsersCordova extends CordovaPlugin {
     private final String TAG = QUsersCordova.class.getCanonicalName();
@@ -80,6 +82,7 @@ public class QUsersCordova extends CordovaPlugin {
     //Error codes for returning with error plugin result
     protected static final String UNKNOWN_ERROR = "Unknown error.";
     protected static final String INVALID_DATA_ERROR = "Invalid data.";
+    protected static final String SYNCING_CONTACTS = "Contacts syncing.";
     protected static final String SUCCESS = "Success";
     protected static final String NO_ACCOUNT_ERROR = "No accounts bound to device. There is no labels for local contacts.";
     protected static final String MISSING_CONTACT_ERROR = "There is no contactId(s).";
@@ -462,7 +465,11 @@ public class QUsersCordova extends CordovaPlugin {
                                 callbackContext.error(UNKNOWN_ERROR);
                             }
                         } catch (Exception e) {
-                            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, e.getMessage()));
+                            if(e.getMessage().equalsIgnoreCase(GROUP_SYNCING)) {
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, SYNCING_CONTACTS));
+                            } else {
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, e.getMessage()));
+                            }
                         }
                     } else {
                         try {
