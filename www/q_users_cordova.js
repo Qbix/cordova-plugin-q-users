@@ -156,6 +156,13 @@ module.exports = {
 var UI = {
     show:function(contactId, successCallback, errorCallback) {
         cordova.exec(successCallback, errorCallback, "QUsersUICordova", "show", [contactId]);
+    },
+    create:function(successCallback, errorCallback) {
+        if(cordova.platformId == "android") {
+            cordova.exec(successCallback, errorCallback, "QUsersUICordova", "create", []);
+        } else {
+            navigator.contacts.newContactUI(successCallback);
+        }
     }
 }
 
