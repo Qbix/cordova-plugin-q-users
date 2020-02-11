@@ -46,7 +46,7 @@
 }
 
 +(void) requestPermission:(void (^)(BOOL)) callback {
-    ABAddressBookRef addressBook = [self createAddressBook];
+    ABAddressBookRef addressBook = CFRetain([self createAddressBook]);
     if(addressBook == nil && callback != nil) {
         callback(NO);
     } else {
@@ -133,6 +133,8 @@ void addressBookChanged(ABAddressBookRef addressBook, CFDictionaryRef info, void
                 dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
                 if(!grantedResult) {
                     [QABAdressBook throwContactAccessDeniendException];
+                } else {
+                    callback(YES);
                 }
             } else {
                 ABAddressBookRequestAccessWithCompletion(addressBook, nil);
